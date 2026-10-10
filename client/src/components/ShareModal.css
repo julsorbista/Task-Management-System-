@@ -1,0 +1,62 @@
+/* ShareModal.css */
+
+/* Input with a button (and sometimes a select) on the same line */
+.share-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.share-role {
+  height: 38px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+/* One person in the list */
+.share-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.share-member-name {
+  min-width: 0;
+  margin-right: auto;
+}
+
+/* "owner", "editor", "viewer" shown with a capital letter */
+.share-member-role {
+  font-size: 13px;
+  text-transform: capitalize;
+}
+
+@media (max-width: 480px) {
+  .share-line {
+    flex-wrap: wrap;
+  }
+}
+
+/* Note shown to people who are not the owner */
+.share-note {
+  margin-bottom: 16px;
+}
+
+/* "People with access" label */
+.share-people-label {
+  margin-top: 20px;
+}
+
+/* Name and email of a person, each on its own line */
+.share-member-title {
+  display: block;
+  font-weight: 500;
+}
+
+.share-member-email {
+  display: block;
+}

@@ -1,0 +1,36 @@
+/* ViewSwitcher.css - three buttons joined in one box */
+
+.view-switcher {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.view-switcher a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 13px;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.view-switcher a:last-child {
+  border-right: 0;
+}
+
+/* The view you are on */
+.view-switcher a.active {
+  background: var(--tint);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .view-switcher a {
+    min-height: 44px;
+  }
+}

@@ -1,0 +1,518 @@
+/* ==========================================================
+   index.css
+   Global styles for Morrow.
+   1. Color variables for the light theme
+   2. Color variables for the dark theme
+   3. Base styles (font, page background)
+   4. Small shared pieces used on many screens (buttons, inputs)
+   ========================================================== */
+
+/* ---------- 1. Light theme (the default) ---------- */
+:root {
+  --bg: #fafaf9;          /* page background (off-white) */
+  --surface: #ffffff;     /* cards, inputs, menus */
+  --line: #e6e6e3;        /* thin borders and dividers */
+  --text: #1e1f22;        /* main text */
+  --muted: #63656a;       /* secondary gray text */
+  --faint: #f2f2f0;       /* hover backgrounds */
+
+  --accent: #4f6f6b;      /* the ONE accent color: primary buttons, active states */
+  --on-accent: #ffffff;   /* text on top of the accent color */
+  --tint: #eaf0ef;        /* very light accent, for active backgrounds */
+
+  --over: #b14f48;        /* soft red: overdue, errors, delete */
+  --over-bg: #f8e9e7;
+
+  --hi: #96473e;          /* priority: high */
+  --hi-bg: #f6e4e1;
+  --md: #775817;          /* priority: medium */
+  --md-bg: #f5ecd6;
+  --lo: #3f5f7d;          /* priority: low */
+  --lo-bg: #e3ecf4;
+
+  --veil: rgba(30, 31, 34, 0.28); /* dark layer behind pop-up windows */
+}
+
+/* ---------- 2. Dark theme ----------
+   Turned on by setting data-theme="dark" on the <html> tag. */
+:root[data-theme='dark'] {
+  --bg: #151617;
+  --surface: #1b1c1e;
+  --line: #2d2f32;
+  --text: #e9e9e6;
+  --muted: #a0a2a7;
+  --faint: #222426;
+
+  --accent: #8db3ac;
+  --on-accent: #121415;
+  --tint: #22302e;
+
+  --over: #e3948b;
+  --over-bg: #3a2422;
+
+  --hi: #e6a69d;
+  --hi-bg: #3a2623;
+  --md: #dec183;
+  --md-bg: #383020;
+  --lo: #a1beda;
+  --lo-bg: #22303c;
+
+  --veil: rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- 3. Base styles ---------- */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Instrument Sans', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+/* Form controls do not inherit the font by default, so we ask them to */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Visible outline when moving around with the keyboard */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---------- 4. Shared pieces ---------- */
+
+/* Standard button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--faint);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Primary button (uses the accent color) */
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn-primary:hover {
+  background: var(--accent);
+  opacity: 0.92;
+}
+
+/* Red text button, for delete actions */
+.btn-danger {
+  color: var(--over);
+}
+
+/* Full-width button, used on the auth screens */
+.btn-wide {
+  width: 100%;
+  min-height: 40px;
+}
+
+/* Square button that only holds an icon */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  position: relative;
+  flex: none;
+}
+
+.icon-btn:hover {
+  background: var(--faint);
+  color: var(--text);
+}
+
+/* Highlighted icon button (for example the bell on the Notifications view) */
+.icon-btn.active {
+  background: var(--tint);
+  color: var(--accent);
+}
+
+/* Line icons: every <svg className="icon"> gets the same thin stroke */
+.icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+
+/* Button that looks like a text link */
+.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* Form field: label + input + error message */
+.field {
+  margin-bottom: 16px;
+}
+
+.label {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.input {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field .input {
+  padding-right: 38px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.password-toggle:hover {
+  background: var(--faint);
+  color: var(--text);
+}
+
+.password-toggle .icon {
+  width: 16px;
+  height: 16px;
+}
+
+textarea.input {
+  height: auto;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+/* Red border when the field has an error */
+.input.has-error {
+  border-color: var(--over);
+}
+
+.error-text {
+  color: var(--over);
+  font-size: 12.5px;
+  margin-top: 4px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Bigger touch targets on phones */
+@media (max-width: 760px) {
+  .btn {
+    min-height: 44px;
+  }
+
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .input {
+    height: 44px;
+  }
+}
+
+/* ---------- 5. More shared pieces (used by several screens) ---------- */
+
+/* Priority chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.chip-high {
+  background: var(--hi-bg);
+  color: var(--hi);
+}
+
+.chip-medium {
+  background: var(--md-bg);
+  color: var(--md);
+}
+
+.chip-low {
+  background: var(--lo-bg);
+  color: var(--lo);
+}
+
+/* Due date text. Overdue is shown in soft red. */
+.due {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.due.overdue {
+  color: var(--over);
+  font-weight: 500;
+}
+
+/* Round avatar with initials or a photo */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--faint);
+  border: 1px solid var(--line);
+  font-size: 10.5px;
+  font-weight: 600;
+  flex: none;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Pop-up window: a dark layer with a card in the middle */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--veil);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 16px;
+  overflow: auto;
+}
+
+.modal {
+  width: 100%;
+  max-width: 540px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 24px;
+}
+
+.modal-small {
+  max-width: 400px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-right: auto;
+}
+
+.modal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Page titles */
+.page-title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Small rounded choice button (used for toggles and quick options) */
+.pill {
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: var(--surface);
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pill.active {
+  background: var(--tint);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Row of things with a small gap that wraps on small screens */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Two columns that become one on phones */
+.two-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* White box with a thin border */
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 20px;
+}
+
+/* Message shown when a list has nothing in it */
+.empty-state {
+  padding: 56px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.empty-state strong {
+  display: block;
+  color: var(--text);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* One line of text that ends with "..." when it is too long */
+.one-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.small-text {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* Hidden on screen but still read by screen readers */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+@media (max-width: 760px) {
+  .two-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .overlay {
+    padding: 12px;
+  }
+
+  .modal {
+    padding: 18px;
+  }
+}
+
+/* Links styled as buttons keep the button text color */
+a.btn {
+  color: var(--text);
+  text-decoration: none;
+}
+
+a.btn-primary {
+  color: var(--on-accent);
+}

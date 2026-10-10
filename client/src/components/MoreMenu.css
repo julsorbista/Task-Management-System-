@@ -1,0 +1,35 @@
+/* MoreMenu.css - the small menu opened by the three-dot button */
+
+.more-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+}
+
+.more-menu {
+  position: fixed;
+  z-index: 81;
+  width: 140px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.more-menu-item {
+  display: block;
+  width: 100%;
+  padding: 9px 14px;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.more-menu-item:hover {
+  background: var(--faint);
+}
+
+.more-menu-item.danger {
+  color: var(--over);
+}

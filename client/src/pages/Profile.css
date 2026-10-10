@@ -1,0 +1,41 @@
+/* Profile.css */
+
+.profile {
+  max-width: 640px;
+}
+
+.profile-title {
+  margin-bottom: 24px;
+}
+
+/* Space between the boxes */
+.profile-panel {
+  margin-top: 16px;
+}
+
+.profile-section-title {
+  margin-bottom: 16px;
+}
+
+/* Big avatar with the "Change photo" button */
+.profile-photo-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  font-size: 22px;
+}
+
+.profile-delete-text {
+  margin: 4px 0 16px;
+}
+
+.profile-logout {
+  margin-top: 24px;
+}

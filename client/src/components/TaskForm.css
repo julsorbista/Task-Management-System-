@@ -1,0 +1,26 @@
+/* TaskForm.css - small spacing tweaks for the task form.
+   The pop-up window itself (.overlay, .modal) is styled in index.css. */
+
+/* Due date and time sit closer to the quick options under them */
+.task-form-tight {
+  margin-bottom: 8px;
+}
+
+.task-form-quick {
+  margin-bottom: 16px;
+}
+
+/* "Clear date" sits at the far right of the quick options row,
+   lined up with the right edge of the Due time field */
+.task-form-clear {
+  margin-left: auto;
+}
+
+/* Date and time inputs of a custom reminder */
+.task-form-custom {
+  margin-top: 10px;
+}
+
+.task-form-hint {
+  margin-top: 6px;
+}

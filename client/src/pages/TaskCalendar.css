@@ -1,0 +1,110 @@
+/* TaskCalendar.css - the calendar view */
+
+.calendar-bar {
+  margin-bottom: 12px;
+}
+
+.calendar-month {
+  min-width: 130px;
+}
+
+.calendar-note {
+  margin-left: auto;
+}
+
+/* Lets the calendar scroll sideways on small screens */
+.calendar-box {
+  overflow-x: auto;
+}
+
+/* Seven equal columns, one per weekday */
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-width: 760px;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.calendar-weekday {
+  padding: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+/* One day */
+.calendar-day {
+  min-height: 108px;
+  padding: 6px;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+/* Days that belong to the month before or after */
+.calendar-day.other-month {
+  background: var(--bg);
+}
+
+.calendar-day.other-month .calendar-number {
+  color: var(--muted);
+}
+
+.calendar-number {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  font-size: 12.5px;
+}
+
+/* Today gets a filled circle */
+.calendar-number.today {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+/* One task inside a day */
+.calendar-task {
+  display: block;
+  width: 100%;
+  padding: 3px 6px;
+  margin-bottom: 3px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--faint);
+  font-size: 12px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-task:hover {
+  background: var(--tint);
+}
+
+.calendar-task.overdue {
+  background: var(--over-bg);
+  color: var(--over);
+}
+
+.calendar-task.done {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* The due time shown before the title */
+.calendar-time {
+  margin-right: 5px;
+  color: var(--muted);
+}
+
+.calendar-task.overdue .calendar-time {
+  color: inherit;
+}

@@ -1,0 +1,112 @@
+/* ExportModal.css */
+
+/* The two big format buttons (CSV, PDF) */
+.export-format {
+  flex: 1;
+  min-width: 150px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  text-align: left;
+}
+
+.export-format.active {
+  border-color: var(--accent);
+  background: var(--tint);
+}
+
+/* ---------- Task picker ---------- */
+
+/* "Select all" and the search field on one line */
+.export-picker-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Scrollable list of tasks */
+.export-list {
+  max-height: 236px;
+  margin-top: 8px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+/* One task: checkbox, title, due date, priority, Private/Shared */
+.export-task {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.export-task:hover {
+  background: var(--faint);
+}
+
+.export-task input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.export-select-all {
+  padding: 0;
+  border-bottom: 0;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.export-select-all:hover {
+  background: none;
+}
+
+.export-task-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.export-task-scope {
+  width: 50px;
+  flex: none;
+  text-align: right;
+}
+
+.export-none {
+  padding: 16px 12px;
+}
+
+.export-date-error {
+  margin: -10px 0 14px;
+}
+
+/* ---------- Footer ---------- */
+.export-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.export-count {
+  margin-right: auto;
+}
+
+@media (max-width: 480px) {
+  .export-task {
+    flex-wrap: wrap;
+  }
+
+  .export-task-title {
+    flex-basis: 70%;
+  }
+}

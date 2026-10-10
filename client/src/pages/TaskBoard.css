@@ -1,0 +1,144 @@
+/* TaskBoard.css - the board view */
+
+/* Three columns side by side */
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.board-column {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--bg);
+}
+
+.board-column-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 2px 12px;
+}
+
+/* ---------- Card ---------- */
+.board-card {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.board-card:hover {
+  border-color: var(--muted);
+}
+
+/* The title is a button. Its ::after layer covers the whole card,
+   so a click anywhere on the card opens the form. */
+.board-card-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.board-card-open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+}
+
+.board-card-title {
+  font-weight: 500;
+}
+
+.board-card-title.done {
+  text-decoration: line-through;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* Bottom row of the card: priority, due date, avatar, delete */
+.board-card-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.board-card-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* Red delete icon. z-index keeps it clickable above the card's click layer. */
+.board-card-delete {
+  position: relative;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  color: var(--over);
+}
+
+.board-card-delete:hover {
+  background: var(--over-bg);
+  color: var(--over);
+}
+
+.board-empty {
+  padding: 14px 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ---------- "+ Add task" ---------- */
+.board-add {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  text-align: left;
+}
+
+.board-add:hover {
+  background: var(--faint);
+}
+
+.board-add-card {
+  padding: 8px;
+}
+
+.board-add-buttons {
+  margin-top: 8px;
+}
+
+/* Phones: the columns stack */
+@media (max-width: 760px) {
+  .board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .board-add {
+    min-height: 44px;
+  }
+
+  .board-card-delete {
+    width: 36px;
+    height: 36px;
+  }
+}

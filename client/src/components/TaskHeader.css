@@ -1,0 +1,53 @@
+/* TaskHeader.css - title row and filter row above the tasks */
+
+.task-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.task-header-title {
+  margin-right: auto;
+}
+
+/* Avatars overlap a little */
+.task-header-avatars {
+  display: flex;
+}
+
+.task-header-avatars .avatar {
+  margin-left: -6px;
+  border-color: var(--bg);
+}
+
+.task-header-avatars .avatar:first-child {
+  margin-left: 0;
+}
+
+.task-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.task-toolbar-views {
+  margin-right: auto;
+}
+
+.task-select {
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+@media (max-width: 760px) {
+  .task-select {
+    height: 44px;
+  }
+}

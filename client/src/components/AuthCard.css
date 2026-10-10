@@ -1,0 +1,63 @@
+/* AuthCard.css - the card used by the auth screens */
+
+/* Fills the screen and centers the card */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 36px 32px;
+}
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  margin-bottom: 36px;
+}
+
+.auth-logo .icon {
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+  stroke-width: 2;
+}
+
+/* Gray line of text under the heading */
+.auth-text {
+  color: var(--muted);
+  margin: 6px 0 28px;
+}
+
+/* "Forgot password?" sits under the password field, on the right */
+.auth-forgot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+  font-size: 12.5px;
+}
+
+/* Line of text with a link at the bottom of the card */
+.auth-bottom {
+  color: var(--muted);
+  margin-top: 24px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 28px 20px;
+  }
+}

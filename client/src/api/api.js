@@ -27,6 +27,7 @@ let notifications = makeCopy(mockNotifications)
 
 // The logged-in user's id is saved in the browser so a refresh keeps you logged in
 let currentUserId = localStorage.getItem('morrow-user-id') || ''
+let loginOtpChallenges = []
 
 // ---------- Small helpers used only inside this file ----------
 
@@ -40,6 +41,34 @@ function makeId(prefix) {
   return prefix + '-' + Date.now() + '-' + Math.floor(Math.random() * 1000)
 }
 
+function makeOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000))
+}
+
+function removeExpiredOtpChallenges() {
+  loginOtpChallenges = loginOtpChallenges.filter((challenge) => challenge.expiresAt > Date.now())
+}
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(path, {
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    ...options,
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    throw new Error(data.message || 'Something went wrong.')
+  }
+  return data
+}
+
+function isNetworkError(error) {
+  return error instanceof TypeError
+}
+
 // Remove the password before sending a user to the screen
 function hidePassword(user) {
   const copy = makeCopy(user)
@@ -51,24 +80,115 @@ function hidePassword(user) {
 // AUTH
 // =====================================================
 
-// Log in. Throws an error when the email or password is wrong.
-export async function login(email, password) {
-  const user = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase())
-  if (!user || user.password !== password) {
-    throw new Error('Incorrect email or password.')
+// Start login. Throws an error when the username/email or password is wrong.
+export async function login(identifier, password) {
+  try {
+    return await apiRequest('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ identifier, password }),
+    })
+  } catch (error) {
+    if (!isNetworkError(error)) throw error
   }
-  currentUserId = user._id
-  localStorage.setItem('morrow-user-id', user._id)
+
+  const value = identifier.trim().toLowerCase()
+  const user = users.find((u) => u.email.toLowerCase() === value || u.username.toLowerCase() === value)
+  if (!user || user.password !== password) {
+    throw new Error('Incorrect username/email or password.')
+  }
+
+  removeExpiredOtpChallenges()
+  const otp = makeOtp()
+  const challenge = {
+    _id: makeId('otp'),
+    userId: user._id,
+    otp,
+    expiresAt: Date.now() + 5 * 60 * 1000,
+  }
+  loginOtpChallenges.push(challenge)
+
+  return {
+    otpRequired: true,
+    challengeId: challenge._id,
+    delivery: 'email',
+    destination: user.email,
+    demoOtp: otp,
+  }
+}
+
+// Finish login after the OTP has been entered.
+export async function verifyLoginOtp(challengeId, otp) {
+  try {
+    const data = await apiRequest('/api/auth/login/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ challengeId, otp }),
+    })
+    if (data.user?._id) {
+      currentUserId = data.user._id
+      localStorage.setItem('morrow-user-id', data.user._id)
+    }
+    return data.user
+  } catch (error) {
+    if (!isNetworkError(error)) throw error
+  }
+
+  removeExpiredOtpChallenges()
+  const challenge = loginOtpChallenges.find((item) => item._id === challengeId)
+  if (!challenge) {
+    throw new Error('The OTP expired. Please log in again.')
+  }
+  if (challenge.otp !== otp.trim()) {
+    throw new Error('Incorrect OTP code.')
+  }
+
+  loginOtpChallenges = loginOtpChallenges.filter((item) => item._id !== challengeId)
+  currentUserId = challenge.userId
+  localStorage.setItem('morrow-user-id', challenge.userId)
+  const user = users.find((u) => u._id === challenge.userId)
   return hidePassword(user)
 }
 
-// Create an account and log in. Throws an error when the email is taken.
-export async function register(name, email, password) {
+// Create an account and log in. Throws an error when the username or email is taken.
+export async function register(name, username, email, password) {
+  try {
+    const data = await apiRequest('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, username, email, password, confirmPassword: password }),
+    })
+
+    if (!users.some((user) => user.email.toLowerCase() === email.trim().toLowerCase())) {
+      const user = {
+        _id: data.user?._id || makeId('u'),
+        name: name.trim(),
+        username: username.trim(),
+        email: email.trim(),
+        password,
+        photo: '',
+      }
+      users.push(user)
+      pages.push({
+        _id: makeId('p'),
+        name: 'My tasks',
+        type: 'private',
+        owner: user._id,
+        members: [{ user: user._id, role: 'owner' }],
+      })
+    }
+
+    return data.user
+  } catch (error) {
+    if (!isNetworkError(error)) throw error
+  }
+
+  const usernameTaken = users.some((u) => u.username.toLowerCase() === username.trim().toLowerCase())
   const emailTaken = users.some((u) => u.email.toLowerCase() === email.trim().toLowerCase())
+  if (usernameTaken) {
+    throw new Error('This username is already taken.')
+  }
   if (emailTaken) {
     throw new Error('An account with this email already exists.')
   }
-  const newUser = { _id: makeId('u'), name: name.trim(), email: email.trim(), password, photo: '' }
+  const newUser = { _id: makeId('u'), name: name.trim(), username: username.trim(), email: email.trim(), password, photo: '' }
   users.push(newUser)
 
   // Every new user starts with one private page
@@ -80,8 +200,6 @@ export async function register(name, email, password) {
     members: [{ user: newUser._id, role: 'owner' }],
   })
 
-  currentUserId = newUser._id
-  localStorage.setItem('morrow-user-id', newUser._id)
   return hidePassword(newUser)
 }
 
@@ -127,6 +245,19 @@ export async function getUsers() {
 // Change the logged-in user's name, email or photo
 export async function updateProfile(changes) {
   const user = users.find((u) => u._id === currentUserId)
+  if (changes.username !== undefined) {
+    const usernameTaken = users.some(
+      (u) => u._id !== currentUserId && u.username.toLowerCase() === changes.username.trim().toLowerCase()
+    )
+    if (usernameTaken) throw new Error('This username is already taken.')
+    user.username = changes.username
+  }
+  if (changes.email !== undefined) {
+    const emailTaken = users.some(
+      (u) => u._id !== currentUserId && u.email.toLowerCase() === changes.email.trim().toLowerCase()
+    )
+    if (emailTaken) throw new Error('An account with this email already exists.')
+  }
   if (changes.name !== undefined) user.name = changes.name
   if (changes.email !== undefined) user.email = changes.email
   if (changes.photo !== undefined) user.photo = changes.photo
@@ -211,7 +342,7 @@ export async function inviteMember(pageId, email, role) {
   // If nobody has this email yet, make a simple user from the email address
   if (!user) {
     const nameFromEmail = email.trim().split('@')[0]
-    user = { _id: makeId('u'), name: nameFromEmail, email: email.trim(), password: '', photo: '' }
+    user = { _id: makeId('u'), name: nameFromEmail, username: makeId('guest'), email: email.trim(), password: '', photo: '' }
     users.push(user)
   }
 

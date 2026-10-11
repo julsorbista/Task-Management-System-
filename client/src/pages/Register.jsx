@@ -5,14 +5,15 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard.jsx'
 import Icon from '../components/Icon.jsx'
-import { register, getPages } from '../api/api.js'
-import { isValidEmail } from '../utils/helpers.js'
+import { register } from '../api/api.js'
+import { isValidEmail, isValidPassword, isValidUsername } from '../utils/helpers.js'
 import { showToast } from '../utils/toast.js'
 
 function Register() {
   const navigate = useNavigate()
 
   const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -28,23 +29,28 @@ function Register() {
     // 1. Check every field and collect the error messages
     const newErrors = {}
     if (name.trim() === '') newErrors.name = 'Enter your name.'
+    if (username.trim() === '') newErrors.username = 'Enter your username.'
+    else if (!isValidUsername(username)) {
+      newErrors.username = 'Username must be at least 4 characters and use letters, numbers, or underscores.'
+    }
     if (email.trim() === '') newErrors.email = 'Enter your email.'
     else if (!isValidEmail(email)) newErrors.email = 'Enter a valid email address.'
-    if (password.length < 8) newErrors.password = 'Use at least 8 characters.'
+    if (password === '') newErrors.password = 'Enter your password.'
+    else if (!isValidPassword(password)) newErrors.password = 'Use at least 8 characters.'
     if (confirmPassword === '') newErrors.confirmPassword = 'Confirm your password.'
     else if (confirmPassword !== password) newErrors.confirmPassword = 'Passwords do not match.'
 
     setErrors(newErrors)
     if (Object.keys(newErrors).length > 0) return
 
-    // 2. Create the account and open the first page
+    // 2. Create the account, then ask the user to log in with OTP
     try {
-      await register(name, email, password)
-      const pages = await getPages()
-      showToast('Account created')
-      navigate('/pages/' + pages[0]._id + '/list')
+      await register(name, username, email, password)
+      showToast('Account created. Please log in.')
+      navigate('/login')
     } catch (error) {
-      setErrors({ email: error.message })
+      if (error.message.toLowerCase().includes('username')) setErrors({ username: error.message })
+      else setErrors({ email: error.message })
     }
   }
 
@@ -63,6 +69,21 @@ function Register() {
             onChange={(event) => setName(event.target.value)}
           />
           {errors.name && <div className="error-text">{errors.name}</div>}
+        </div>
+
+        <div className="field">
+          <label className="label" htmlFor="register-username">
+            Username
+          </label>
+          <input
+            id="register-username"
+            type="text"
+            className={errors.username ? 'input has-error' : 'input'}
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            autoComplete="username"
+          />
+          {errors.username && <div className="error-text">{errors.username}</div>}
         </div>
 
         <div className="field">

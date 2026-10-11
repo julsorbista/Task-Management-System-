@@ -3,14 +3,23 @@ require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true })
 const express = require('express')
 const cookieParser = require('cookie-parser')
 const connectDatabase = require('./config/db')
+const authRoutes = require('./routes/authRoutes')
+const profileRoutes = require('./routes/profileRoutes')
 
 const app = express()
-app.use(express.json())
+app.use(express.json({ limit: '2mb' }))
 app.use(cookieParser())
 
 app.get('/', (req, res) => {
   res.send('Server is running')
 })
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' })
+})
+
+app.use('/api/auth', authRoutes)
+app.use('/api/profile', profileRoutes)
 
 async function startServer() {
   try {

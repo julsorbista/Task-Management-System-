@@ -1,6 +1,5 @@
 const { verifyToken } = require('../utils/jwt')
 
-// Token verification only. Add the shared User lookup when its model is ready.
 function authenticate(req, res, next) {
   const token = req.cookies?.access_token
 

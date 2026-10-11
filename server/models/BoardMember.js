@@ -7,7 +7,7 @@ const boardMemberSchema = new mongoose.Schema(
       ref: 'Board',
       required: true,
     },
-    // Confirm the User model name and ObjectId IDs with Thea.
+
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -27,7 +27,7 @@ const boardMemberSchema = new mongoose.Schema(
   },
 )
 
-// MongoDB enforces this once the index has been created.
+
 boardMemberSchema.index({ board: 1, user: 1 }, { unique: true })
 
 module.exports = mongoose.model('BoardMember', boardMemberSchema)

@@ -2,7 +2,6 @@ const mongoose = require('mongoose')
 const Board = require('../models/Board')
 const BoardMember = require('../models/BoardMember')
 
-// Mount after authenticate on a route with a :boardId parameter.
 function requireBoardRole(...allowedRoles) {
   if (!allowedRoles.length || allowedRoles.some((role) => !['owner', 'editor', 'viewer'].includes(role))) {
     throw new Error('Specify valid board roles')
@@ -24,7 +23,7 @@ function requireBoardRole(...allowedRoles) {
       }
 
       let role
-      // Board.owner is authoritative; a member cannot grant ownership.
+
       if (String(board.owner) === String(req.user.id)) {
         role = 'owner'
       } else if (board.type === 'shared') {
@@ -32,7 +31,7 @@ function requireBoardRole(...allowedRoles) {
         if (member && ['editor', 'viewer'].includes(member.role)) role = member.role
       }
 
-      // Hide inaccessible boards from nonmembers, including private boards.
+
       if (!role) {
         return res.status(404).json({ message: 'Board not found.' })
       }

@@ -6,7 +6,9 @@ const {
 } = require('../middleware/boardPermissions')
 const {
   createTask,
+  deleteTask,
   getTasks,
+  updateTask,
 } = require('../controllers/taskController')
 
 const router = express.Router({ mergeParams: true })
@@ -33,6 +35,20 @@ router.post(
   requireWriteRequest,
   canEditBoardTasks,
   createTask,
+)
+
+router.patch(
+  '/:taskId',
+  requireWriteRequest,
+  canEditBoardTasks,
+  updateTask,
+)
+
+router.delete(
+  '/:taskId',
+  requireWriteRequest,
+  canEditBoardTasks,
+  deleteTask,
 )
 
 module.exports = router

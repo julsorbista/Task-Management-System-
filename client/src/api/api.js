@@ -17,7 +17,6 @@
 // The pages only call these functions, so nothing else needs to change.
 
 import { mockUsers, mockPages, mockTasks, mockNotifications } from '../data/mockData.js'
-import { todayString } from '../utils/helpers.js'
 
 // ---------- The fake database (kept in memory) ----------
 let users = makeCopy(mockUsers)
@@ -93,8 +92,21 @@ export async function logout() {
 
 // The logged-in user, or null when nobody is logged in
 export async function getCurrentUser() {
-  const user = users.find((u) => u._id === currentUserId)
-  return user ? hidePassword(user) : null
+  const response = await fetch('/api/users/me', {
+    credentials: 'include',
+  })
+
+  const data = await response.json()
+
+  if (response.status === 401 || response.status === 404) {
+    return null
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to get current user.')
+  }
+
+  return data
 }
 
 // Ask for a password reset email. (The real backend sends the email.)
@@ -121,16 +133,37 @@ export async function resetPassword(newPassword) {
 
 // All users (used to show names and avatars)
 export async function getUsers() {
-  return users.map(hidePassword)
+  const response = await fetch('/api/users', {
+    credentials: 'include',
+  })
+
+  return readApiJson(response, 'Failed to load users.')
 }
 
 // Change the logged-in user's name, email or photo
 export async function updateProfile(changes) {
-  const user = users.find((u) => u._id === currentUserId)
-  if (changes.name !== undefined) user.name = changes.name
-  if (changes.email !== undefined) user.email = changes.email
-  if (changes.photo !== undefined) user.photo = changes.photo
-  return hidePassword(user)
+  const profileChanges = {}
+  if (changes.name !== undefined) profileChanges.name = changes.name
+  if (changes.email !== undefined) profileChanges.email = changes.email
+  if (changes.photo !== undefined) profileChanges.photo = changes.photo
+
+  const response = await fetch('/api/users/me', {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: JSON.stringify(profileChanges),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to update profile.')
+  }
+
+  return data
 }
 
 // Change the password. Throws an error when the current password is wrong.
@@ -168,8 +201,15 @@ export async function getPages() {
 
 // One page by id, or null when it does not exist
 export async function getPage(pageId) {
-  const page = pages.find((p) => p._id === pageId)
-  return page ? makeCopy(page) : null
+  const response = await fetch(`/api/boards/${pageId}`, {
+    credentials: 'include',
+  })
+
+  if (response.status === 404) {
+    return null
+  }
+
+  return readApiJson(response, 'Failed to load page.')
 }
 
 // Add a page. type is 'private' or 'shared'.
@@ -244,6 +284,41 @@ export async function removeMember(pageId, userId) {
 // TASKS
 // =====================================================
 
+const taskFields = [
+  'title',
+  'description',
+  'dueDate',
+  'dueTime',
+  'priority',
+  'status',
+  'assignee',
+  'reminder',
+  'reminderDate',
+  'reminderTime',
+]
+
+function taskPayload(taskData) {
+  const payload = {}
+
+  for (const field of taskFields) {
+    if (taskData[field] !== undefined) {
+      payload[field] = taskData[field]
+    }
+  }
+
+  return payload
+}
+
+async function readApiJson(response, fallbackMessage) {
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    throw new Error(data.message || fallbackMessage)
+  }
+
+  return data
+}
+
 // Every task on the pages the logged-in user can see
 export async function getTasks() {
   const myPageIds = pages.filter((p) => p.members.some((m) => m.user === currentUserId)).map((p) => p._id)
@@ -252,45 +327,67 @@ export async function getTasks() {
 
 // The tasks of one page
 export async function getTasksByPage(pageId) {
-  return makeCopy(tasks.filter((t) => t.page === pageId))
+  const response = await fetch(`/api/boards/${pageId}/tasks`, {
+    credentials: 'include',
+  })
+
+  return readApiJson(response, 'Failed to load tasks.')
 }
 
 // Add a task. taskData holds the task fields (see mockData.js).
 export async function createTask(taskData) {
-  const newTask = {
-    _id: makeId('t'),
-    page: taskData.page,
-    title: taskData.title,
-    description: taskData.description || '',
-    dueDate: taskData.dueDate || '',
-    dueTime: taskData.dueTime || '',
-    priority: taskData.priority || 'medium',
-    status: taskData.status || 'todo',
-    assignee: taskData.assignee || '',
-    reminder: taskData.reminder || 'none',
-    reminderDate: taskData.reminderDate || '',
-    reminderTime: taskData.reminderTime || '',
-    completedAt: taskData.status === 'done' ? todayString() : '',
-  }
-  tasks.unshift(newTask) // unshift puts it at the top of the list
-  return makeCopy(newTask)
+  const response = await fetch(`/api/boards/${taskData.page}/tasks`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: JSON.stringify(taskPayload(taskData)),
+  })
+
+  return readApiJson(response, 'Failed to create task.')
 }
 
 // Change a task. changes holds only the fields that changed.
-export async function updateTask(taskId, changes) {
-  const task = tasks.find((t) => t._id === taskId)
-  Object.assign(task, changes)
+export async function updateTask(pageIdOrTaskId, taskIdOrChanges, maybeChanges) {
+  const hasPageId = maybeChanges !== undefined
+  const pageId = hasPageId ? pageIdOrTaskId : taskIdOrChanges?.page
+  const taskId = hasPageId ? taskIdOrChanges : pageIdOrTaskId
+  const changes = hasPageId ? maybeChanges : taskIdOrChanges
 
-  // Remember the day a task was completed (the Dashboard charts use it)
-  if (task.status === 'done' && !task.completedAt) task.completedAt = todayString()
-  if (task.status !== 'done') task.completedAt = ''
+  if (!pageId) {
+    throw new Error('Task page is required to update a task.')
+  }
 
-  return makeCopy(task)
+  const response = await fetch(`/api/boards/${pageId}/tasks/${taskId}`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: JSON.stringify(taskPayload(changes)),
+  })
+
+  return readApiJson(response, 'Failed to update task.')
 }
 
 // Delete a task
-export async function deleteTask(taskId) {
-  tasks = tasks.filter((t) => t._id !== taskId)
+export async function deleteTask(pageId, taskId) {
+  const response = await fetch(`/api/boards/${pageId}/tasks/${taskId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || 'Failed to delete task.')
+  }
 }
 
 // =====================================================

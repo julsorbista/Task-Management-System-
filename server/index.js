@@ -10,6 +10,7 @@ const cookieParser = require('cookie-parser')
 const connectDatabase = require('./config/db')
 const boardRoutes = require('./routes/boardRoutes')
 const taskRoutes = require('./routes/taskRoutes')
+const userRoutes = require('./routes/userRoutes')
 
 const app = express()
 
@@ -23,6 +24,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/boards', boardRoutes)
 app.use('/api/boards/:boardId/tasks', taskRoutes)
+app.use('/api/users', userRoutes)
 
 // Error handler — after all routes
 app.use((error, req, res, next) => {

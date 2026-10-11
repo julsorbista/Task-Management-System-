@@ -80,8 +80,22 @@ async function getBoards(req, res, next) {
   }
 }
 
-function getBoard(req, res) {
-  return res.json(req.board)
+async function getBoard(req, res, next) {
+  try {
+    const members = await BoardMember.find({ board: req.board._id })
+      .select('user role')
+      .lean()
+
+    const board = req.board.toObject()
+    board.members = members.map((member) => ({
+      user: String(member.user),
+      role: member.role,
+    }))
+
+    return res.json(board)
+  } catch (error) {
+    return next(error)
+  }
 }
 
 async function updateBoard(req, res, next) {

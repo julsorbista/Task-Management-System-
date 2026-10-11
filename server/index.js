@@ -11,6 +11,8 @@ const connectDatabase = require('./config/db')
 const boardRoutes = require('./routes/boardRoutes')
 const taskRoutes = require('./routes/taskRoutes')
 const shareLinkRoutes = require('./routes/shareLinkRoutes')
+const dashboardRoutes = require('./routes/dashboardRoutes')
+const exportRoutes = require('./routes/exportRoutes')
 
 const app = express()
 
@@ -25,6 +27,8 @@ app.get('/', (req, res) => {
 app.use('/api/boards', boardRoutes)
 app.use('/api/boards/:boardId/tasks', taskRoutes)
 app.use('/api/boards/:boardId/share-links', shareLinkRoutes)
+app.use('/api/dashboard', dashboardRoutes)
+app.use('/api/export', exportRoutes)
 
 // Error handler — after all routes
 app.use((error, req, res, next) => {

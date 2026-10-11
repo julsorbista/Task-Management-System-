@@ -158,7 +158,86 @@ async function getTasks(req, res, next) {
   }
 }
 
+async function updateTask(req, res, next) {
+  if (!mongoose.isObjectIdOrHexString(req.params.taskId)) {
+    return res.status(400).json({ message: 'Invalid task ID.' })
+  }
+
+  const body = req.body || {}
+  const fields = ['title', 'description', 'status', 'priority', 'dueDate',
+    'dueTime', 'reminder', 'reminderDate', 'reminderTime']
+  const changes = {}
+  for (const field of fields) {
+    if (body[field] !== undefined) {
+      if (typeof body[field] !== 'string') {
+        return res.status(400).json({ message: `${field} must be text.` })
+      }
+      changes[field] = field === 'title' ? body[field].trim() : body[field]
+    }
+  }
+  if (body.assignee !== undefined) {
+    if (body.assignee !== '' && !mongoose.isObjectIdOrHexString(body.assignee)) {
+      return res.status(400).json({ message: 'Invalid assignee ID.' })
+    }
+    changes.assignee = body.assignee || null
+  }
+  if (!Object.keys(changes).length) {
+    return res.status(400).json({ message: 'Provide at least one editable task field.' })
+  }
+
+  try {
+    // Scope the lookup to the authorized board, never just the task ID.
+    const task = await Task.findOne({ _id: req.params.taskId, board: req.board._id })
+    if (!task) return res.status(404).json({ message: 'Task not found.' })
+
+    if (changes.assignee && String(changes.assignee) !== String(req.board.owner)) {
+      const member = req.board.type === 'shared' && await BoardMember.exists({
+        board: req.board._id,
+        user: changes.assignee,
+        role: { $in: ['editor', 'viewer'] },
+      })
+      if (!member) {
+        return res.status(400).json({ message: 'Assignee must have access to this board.' })
+      }
+    }
+
+    task.set(changes)
+    task.completedAt = task.status === 'done' ? (task.completedAt || todayString()) : ''
+    await task.validate()
+
+    if (task.dueTime && !task.dueDate) {
+      return res.status(400).json({ message: 'A due time requires a due date.' })
+    }
+    if (task.reminder === 'custom' && (!task.reminderDate || !task.reminderTime)) {
+      return res.status(400).json({ message: 'Custom reminders require a date and time.' })
+    }
+    if (!['none', 'custom'].includes(task.reminder) && !task.dueDate) {
+      return res.status(400).json({ message: 'This reminder requires a due date.' })
+    }
+
+    await task.save()
+    return res.json(formatTask(task))
+  } catch (error) {
+    return next(error)
+  }
+}
+
+async function deleteTask(req, res, next) {
+  if (!mongoose.isObjectIdOrHexString(req.params.taskId)) {
+    return res.status(400).json({ message: 'Invalid task ID.' })
+  }
+  try {
+    const result = await Task.deleteOne({ _id: req.params.taskId, board: req.board._id })
+    if (!result.deletedCount) return res.status(404).json({ message: 'Task not found.' })
+    return res.status(204).end()
+  } catch (error) {
+    return next(error)
+  }
+}
+
 module.exports = {
   createTask,
   getTasks,
+  updateTask,
+  deleteTask,
 }

@@ -7,6 +7,8 @@ const {
 const {
   createTask,
   getTasks,
+  updateTask,
+  deleteTask,
 } = require('../controllers/taskController')
 
 const router = express.Router({ mergeParams: true })
@@ -34,5 +36,8 @@ router.post(
   canEditBoardTasks,
   createTask,
 )
+
+router.patch('/:taskId', requireWriteRequest, canEditBoardTasks, updateTask)
+router.delete('/:taskId', requireWriteRequest, canEditBoardTasks, deleteTask)
 
 module.exports = router

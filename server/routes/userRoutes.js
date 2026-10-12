@@ -5,7 +5,9 @@ const authenticate = require('../middleware/authenticate')
 const router = express.Router()
 
 const {
+  clearReadNotifications,
   getNotifications,
+  markAllNotificationsAsRead,
   markNotificationAsRead,
 } = require('../controllers/notificationController')
 
@@ -48,6 +50,16 @@ router.delete('/me', requireWriteRequest, deleteCurrentUser)
 
 
 router.get('/notifications', getNotifications)
+router.patch(
+  '/notifications/read-all',
+  requireWriteRequest,
+  markAllNotificationsAsRead,
+)
+router.delete(
+  '/notifications/read',
+  requireWriteRequest,
+  clearReadNotifications,
+)
 
 router.patch(
   '/notifications/:notificationId/read',

@@ -252,6 +252,7 @@ function TaskBoard() {
       {isShareOpen && (
         <ShareModal
           page={page}
+          pageId={pageId}
           users={users}
           currentUser={currentUser}
           onClose={() => setIsShareOpen(false)}

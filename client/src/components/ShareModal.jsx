@@ -11,15 +11,16 @@ import { inviteMember, updateMemberRole, removeMember } from '../api/api.js'
 import { getInitials, isValidEmail } from '../utils/helpers.js'
 import './ShareModal.css'
 
-function ShareModal({ page, users, currentUser, onClose, onChanged }) {
+function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('editor')
   const [inviteError, setInviteError] = useState('')
   const [message, setMessage] = useState('') // small text when copying fails
   const [memberToRemove, setMemberToRemove] = useState(null)
 
+  const boardId = page._id || page.id || pageId
   const isOwner = page.owner === currentUser._id
-  const shareLink = window.location.origin + '/pages/' + page._id + '/list'
+  const shareLink = window.location.origin + '/pages/' + boardId + '/list'
 
   // Invite a person by email
   async function handleInvite() {
@@ -31,8 +32,12 @@ function ShareModal({ page, users, currentUser, onClose, onChanged }) {
       setInviteError('Enter a valid email address.')
       return
     }
+    if (!boardId) {
+      setInviteError('Board ID is missing. Refresh the page and try again.')
+      return
+    }
     try {
-      await inviteMember(page._id, inviteEmail, inviteRole)
+      await inviteMember(boardId, inviteEmail, inviteRole)
       showToast('Member invited')
       setInviteEmail('')
       setInviteError('')
@@ -55,15 +60,19 @@ function ShareModal({ page, users, currentUser, onClose, onChanged }) {
 
   // Change a person's role
   async function handleRoleChange(userId, newRole) {
-    await updateMemberRole(page._id, userId, newRole)
+    await updateMemberRole(boardId, userId, newRole)
     onChanged()
   }
 
   // Remove a person (after the confirmation)
   async function confirmRemove() {
-    await removeMember(page._id, memberToRemove._id)
-    setMemberToRemove(null)
-    onChanged()
+    try {
+      await removeMember(boardId, memberToRemove._id)
+      setMemberToRemove(null)
+      onChanged()
+    } catch (error) {
+      showToast(error.message || 'Failed to remove member.')
+    }
   }
 
   return (

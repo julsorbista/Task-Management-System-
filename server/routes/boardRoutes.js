@@ -2,7 +2,15 @@ const express = require('express')
 const mongoose = require('mongoose')
 const authenticate = require('../middleware/authenticate')
 const { canViewBoard, canManageBoard } = require('../middleware/boardPermissions')
-const { createBoard, getBoards, getBoard, updateBoard, deleteBoard } = require('../controllers/boardController')
+const {
+  createBoard,
+  deleteBoard,
+  getBoard,
+  getBoards,
+  inviteBoardMember,
+  removeBoardMember,
+  updateBoard,
+} = require('../controllers/boardController')
 
 const router = express.Router()
 
@@ -34,6 +42,8 @@ function requireWriteRequest(req, res, next) {
 
 router.post('/', requireWriteRequest, createBoard)
 router.get('/', getBoards)
+router.post('/:boardId/members', requireWriteRequest, canManageBoard, inviteBoardMember)
+router.delete('/:boardId/members/:userId', requireWriteRequest, canManageBoard, removeBoardMember)
 router.get('/:boardId', canViewBoard, getBoard)
 router.patch('/:boardId', requireWriteRequest, canManageBoard, updateBoard)
 router.delete('/:boardId', requireWriteRequest, canManageBoard, deleteBoard)

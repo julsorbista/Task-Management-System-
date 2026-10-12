@@ -1,6 +1,7 @@
 ﻿const mongoose = require('mongoose')
 const Task = require('../models/Task')
 const BoardMember = require('../models/BoardMember')
+const Notification = require('../models/Notification')
 
 // Match the field names expected by the existing frontend.
 function formatTask(task) {
@@ -30,6 +31,17 @@ function todayString() {
   )
 
   return `${values.year}-${values.month}-${values.day}`
+}
+
+async function createAssignmentNotification(task, assignee, actingUserId) {
+  if (!assignee || String(assignee) === String(actingUserId)) return
+
+  await Notification.create({
+    user: assignee,
+    title: 'Task assigned',
+    message: `You were assigned to "${task.title}".`,
+    type: 'assigned',
+  })
 }
 
 const editableFields = [
@@ -200,6 +212,7 @@ async function createTask(req, res, next) {
     if (!validateTaskRules(task, res)) return
 
     await task.save()
+    await createAssignmentNotification(task, assignee, req.user.id)
 
     return res.status(201).json(formatTask(task))
   } catch (error) {
@@ -239,6 +252,8 @@ async function updateTask(req, res, next) {
       })
     }
 
+    const previousAssignee = task.assignee ? String(task.assignee) : ''
+
     Object.assign(task, changes)
 
     if (changes.assignee !== undefined) {
@@ -254,6 +269,15 @@ async function updateTask(req, res, next) {
     if (!validateTaskRules(task, res)) return
 
     await task.save()
+    const newAssignee = task.assignee ? String(task.assignee) : ''
+
+    if (
+      changes.assignee !== undefined &&
+      newAssignee &&
+      newAssignee !== previousAssignee
+    ) {
+      await createAssignmentNotification(task, newAssignee, req.user.id)
+    }
 
     return res.json(formatTask(task))
   } catch (error) {

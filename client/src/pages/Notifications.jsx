@@ -66,21 +66,33 @@ function Notifications() {
 
   // "Mark as read" on one notification (read ones cannot be marked unread again)
   async function handleMarkRead(notification) {
-    await setNotificationRead(notification._id, true)
-    reloadData()
+    const updatedNotification = await setNotificationRead(notification._id, true)
+    setNotifications((currentNotifications) =>
+      currentNotifications.map((item) =>
+        item._id === updatedNotification._id ? updatedNotification : item
+      )
+    )
   }
 
   async function handleMarkAllRead() {
-    await markAllNotificationsRead()
-    showToast('Notifications marked as read')
-    reloadData()
+    try {
+      await markAllNotificationsRead()
+      showToast('Notifications marked as read')
+      reloadData()
+    } catch (error) {
+      showToast(error.message || 'Failed to mark notifications as read')
+    }
   }
 
   async function handleClearRead() {
-    await clearReadNotifications()
-    setIsConfirmingClear(false)
-    showToast('Read notifications cleared')
-    reloadData()
+    try {
+      await clearReadNotifications()
+      setIsConfirmingClear(false)
+      showToast('Read notifications cleared')
+      reloadData()
+    } catch (error) {
+      showToast(error.message || 'Failed to clear read notifications')
+    }
   }
 
   const visibleNotifications = notifications.filter((n) => filter === 'all' || !n.isRead)

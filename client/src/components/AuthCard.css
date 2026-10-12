@@ -56,6 +56,25 @@
   text-align: center;
 }
 
+.auth-note {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--faint);
+  padding: 10px 12px;
+  color: var(--muted);
+  margin: -2px 0 16px;
+}
+
+.auth-note strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.otp-input {
+  text-align: center;
+  font-weight: 600;
+}
+
 @media (max-width: 480px) {
   .auth-card {
     padding: 28px 20px;

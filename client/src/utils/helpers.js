@@ -79,6 +79,14 @@ export function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 }
 
+export function isValidUsername(username) {
+  return /^[A-Za-z0-9_]{4,}$/.test(username.trim())
+}
+
+export function isValidPassword(password) {
+  return password.length >= 8
+}
+
 // Apply the filter and sort choices to a list of tasks.
 // filters looks like: { priority: 'all', status: 'all', due: 'all', sort: 'due-soonest' }
 export function filterAndSortTasks(tasks, filters) {

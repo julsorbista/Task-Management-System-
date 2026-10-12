@@ -15,6 +15,7 @@
     }
   },
   "rewrites": [
+    { "source": "/", "destination": { "service": "client", "path": "/index.html" } },
     { "source": "/api/:path*", "destination": { "service": "server" } },
     { "source": "/:path*", "destination": { "service": "client" } }
   ]

@@ -6,6 +6,7 @@ const mongoose = require('mongoose')
 const User = require('../models/User')
 const Board = require('../models/Board')
 const BoardMember = require('../models/BoardMember')
+const OtpChallenge = require('../models/OtpChallenge')
 const mailer = require('../utils/mailer')
 const { hashPassword, verifyPassword } = require('../utils/password')
 
@@ -27,6 +28,20 @@ test('register → OTP → MongoDB current-user stays authenticated; invalid/rep
     t.after(() => { object[key] = original })
   }
   stub(mongoose.connection, 'transaction', async (callback) => callback({}))
+  const records = new Map()
+  stub(OtpChallenge, 'create', async (data) => { records.set(data._id, { ...data, attempts: 0 }); return data })
+  stub(OtpChallenge, 'findOneAndUpdate', async (query) => {
+    const record = records.get(query._id)
+    if (!record || record.expiresAt <= query.expiresAt.$gt || record.attempts >= query.attempts.$lt) return null
+    record.attempts++
+    return { ...record }
+  })
+  stub(OtpChallenge, 'findOneAndDelete', async (query) => {
+    const record = records.get(query._id)
+    if (!record || record.otpHash !== query.otpHash || record.expiresAt <= query.expiresAt.$gt || record.attempts > query.attempts.$lte) return null
+    records.delete(query._id)
+    return record
+  })
   stub(User, 'exists', async (query) => {
     if (!savedUser) return null
     return query._id || query.email === savedUser.email || query.username === savedUser.username

@@ -43,4 +43,14 @@ async function sendLoginOtpEmail({ to, otp }) {
   return { sent: true }
 }
 
-module.exports = { sendLoginOtpEmail }
+async function sendPasswordResetEmail({ to, link }) {
+  if (!hasSmtpConfig()) throw new Error('SMTP is required for password reset')
+  await createTransporter().sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to,
+    subject: 'Reset your Morrow password',
+    text: `Reset your password using this link: ${link}\nThis link expires in 30 minutes. If you did not request this, you can ignore this email.`,
+  })
+}
+
+module.exports = { sendLoginOtpEmail, sendPasswordResetEmail }

@@ -9,33 +9,42 @@ function CheckEmail() {
   const email = location.state && location.state.email ? location.state.email : 'your email address'
 
   const [wasResent, setWasResent] = useState(false)
+  const [isSending, setIsSending] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleResend() {
-    await requestPasswordReset(email)
-    setWasResent(true)
+    if (isSending || !location.state?.email) return
+    setIsSending(true)
+    setError('')
+    try {
+      await requestPasswordReset(email)
+      setWasResent(true)
+    } catch (failure) {
+      setError(failure.message)
+    } finally {
+      setIsSending(false)
+    }
   }
 
   return (
     <AuthCard
       title="Check your email"
-      text={'We sent a password reset link to ' + email + '. It expires in 30 minutes.'}
+      text={'If an account exists for ' + email + ', you will receive a reset link. It expires in 30 minutes.'}
     >
-      {/* There is no real email yet, so this button stands in for the link in the email */}
-      <Link className="btn btn-wide" to="/reset-password">
-        Open the reset link
-      </Link>
+      <p className="small-text">Open the link in your email. Check your spam folder too.</p>
+      {error && <p role="alert" className="error-text">{error}</p>}
 
       <p className="auth-bottom">
         Nothing arrived?{' '}
-        <button type="button" className="link" onClick={handleResend}>
-          Resend
+        <button type="button" disabled={isSending || !location.state?.email} className="link" onClick={handleResend}>
+          {isSending ? 'Sending…' : 'Resend'}
         </button>{' '}
         or{' '}
         <Link className="link" to="/login">
           back to log in
         </Link>
       </p>
-      {wasResent && <p className="auth-bottom">Reset link sent again.</p>}
+      {wasResent && <p className="auth-bottom">If the account exists, another reset link will be sent.</p>}
     </AuthCard>
   )
 }

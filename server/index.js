@@ -31,6 +31,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' })
 })
 
+// Every deployed API request waits for the shared MongoDB connection.
+app.use('/api', async (req, res, next) => {
+  try {
+    await connectDatabase()
+    next()
+  } catch (error) {
+    console.error(`Database connection failed (${error.name}).`)
+    res.status(503).json({ message: 'Database unavailable. Please try again later.' })
+  }
+})
+
 app.use('/api/auth', authRoutes)
 app.use('/api/profile', profileRoutes)
 app.use('/api/boards', boardRoutes)
@@ -83,4 +94,5 @@ async function startServer() {
   }
 }
 
-startServer()
+if (require.main === module && !process.env.VERCEL) startServer()
+module.exports = app

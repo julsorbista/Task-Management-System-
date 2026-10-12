@@ -11,6 +11,7 @@ function ForgotPassword() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [emailError, setEmailError] = useState('')
+  const [isSending, setIsSending] = useState(false)
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -24,9 +25,16 @@ function ForgotPassword() {
       return
     }
 
-    await requestPasswordReset(email)
-    // Go to the "check your email" screen and tell it which email was used
-    navigate('/check-email', { state: { email: email.trim() } })
+    if (isSending) return
+    setIsSending(true)
+    try {
+      await requestPasswordReset(email)
+      navigate('/check-email', { state: { email: email.trim() } })
+    } catch (error) {
+      setEmailError(error.message)
+    } finally {
+      setIsSending(false)
+    }
   }
 
   return (
@@ -49,8 +57,8 @@ function ForgotPassword() {
           {emailError && <div className="error-text">{emailError}</div>}
         </div>
 
-        <button type="submit" className="btn btn-primary btn-wide">
-          Send reset link
+        <button type="submit" disabled={isSending} className="btn btn-primary btn-wide">
+          {isSending ? 'Sending…' : 'Send reset link'}
         </button>
       </form>
 

@@ -1,37 +1,43 @@
 const crypto = require('crypto')
 
-let challenges = []
+const OtpChallenge = require('../models/OtpChallenge')
 const OTP_TTL_MS = 5 * 60 * 1000
 
-function removeExpiredChallenges() {
-  const now = Date.now()
-  challenges = challenges.filter((challenge) => challenge.expiresAt > now)
+function hashOtp(id, otp) {
+  if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required')
+  return crypto.createHmac('sha256', process.env.JWT_SECRET).update(`${id}:${otp}`).digest('hex')
 }
 
-function createOtpChallenge(userId) {
-  removeExpiredChallenges()
+async function createOtpChallenge(userId) {
 
   const otp = String(crypto.randomInt(100000, 1000000))
   const challenge = {
     id: crypto.randomUUID(),
     userId,
     otp,
-    expiresAt: Date.now() + OTP_TTL_MS,
   }
 
-  challenges.push(challenge)
+  await OtpChallenge.create({
+    _id: challenge.id, user: userId, otpHash: hashOtp(challenge.id, otp),
+    expiresAt: new Date(Date.now() + OTP_TTL_MS),
+  })
   return challenge
 }
 
-function verifyOtpChallenge(challengeId, otp) {
-  removeExpiredChallenges()
-
-  const challenge = challenges.find((item) => item.id === challengeId)
+async function verifyOtpChallenge(challengeId, otp) {
+  if (typeof challengeId !== 'string' || !/^[a-f0-9-]{36}$/.test(challengeId)) return { ok: false, reason: 'expired' }
+  if (typeof otp !== 'string' && typeof otp !== 'number') return { ok: false, reason: 'invalid' }
+  const challenge = await OtpChallenge.findOneAndUpdate({
+    _id: challengeId, expiresAt: { $gt: new Date() }, attempts: { $lt: 5 },
+  }, { $inc: { attempts: 1 } }, { new: true })
   if (!challenge) return { ok: false, reason: 'expired' }
-  if (challenge.otp !== String(otp || '').trim()) return { ok: false, reason: 'invalid' }
-
-  challenges = challenges.filter((item) => item.id !== challengeId)
-  return { ok: true, userId: challenge.userId }
+  const otpHash = hashOtp(challengeId, String(otp).trim())
+  if (!crypto.timingSafeEqual(Buffer.from(challenge.otpHash, 'hex'), Buffer.from(otpHash, 'hex'))) return { ok: false, reason: 'invalid' }
+  // Atomic consumption prevents reuse, including concurrent verification requests.
+  const consumed = await OtpChallenge.findOneAndDelete({
+    _id: challengeId, otpHash, expiresAt: { $gt: new Date() }, attempts: { $lte: 5 },
+  })
+  return consumed ? { ok: true, userId: String(consumed.user) } : { ok: false, reason: 'expired' }
 }
 
 module.exports = { createOtpChallenge, verifyOtpChallenge }

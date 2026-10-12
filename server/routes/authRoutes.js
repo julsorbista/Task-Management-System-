@@ -11,6 +11,9 @@ const { createOtpChallenge, verifyOtpChallenge } = require('../utils/otpStore')
 const { validateLogin, validateRegistration } = require('../utils/validation')
 
 const router = express.Router()
+const { requestReset, resetPassword } = require('../controllers/passwordResetController')
+router.post('/forgot-password', requestReset)
+router.post('/reset-password', resetPassword)
 
 
 
@@ -64,7 +67,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(401).json({ message: 'Incorrect username/email or password.' })
     }
 
-    const challenge = createOtpChallenge(String(user._id))
+    const challenge = await createOtpChallenge(String(user._id))
     let emailResult
     try {
       emailResult = await sendLoginOtpEmail({ to: user.email, otp: challenge.otp })
@@ -78,7 +81,7 @@ router.post('/login', async (req, res, next) => {
       challengeId: challenge.id,
       delivery: 'email',
       destination: user.email,
-      demoOtp: emailResult.sent ? undefined : challenge.otp,
+      demoOtp: emailResult.sent || process.env.NODE_ENV === 'production' ? undefined : challenge.otp,
       message: 'OTP sent. Enter the code to finish logging in.',
     })
   } catch (error) {
@@ -87,14 +90,14 @@ router.post('/login', async (req, res, next) => {
 })
 
 router.post('/login/verify-otp', async (req, res, next) => {
-  const result = verifyOtpChallenge(req.body.challengeId, req.body.otp)
+  try {
+  const result = await verifyOtpChallenge(req.body.challengeId, req.body.otp)
   if (!result.ok) {
     const message =
       result.reason === 'expired' ? 'The OTP expired. Please log in again.' : 'Incorrect OTP code.'
     return res.status(401).json({ message })
   }
 
-  try {
     const user = await User.findById(result.userId)
     if (!user) {
       return res.status(401).json({ message: 'Account not found.' })

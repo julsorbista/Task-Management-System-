@@ -117,19 +117,14 @@ export async function getCurrentUser() {
 // Ask for a password reset email. (The real backend sends the email.)
 // We remember the email so resetPassword knows which account to change.
 export async function requestPasswordReset(email) {
-  sessionStorage.setItem('morrow-reset-email', email.trim())
-  return { message: 'Reset link sent.' }
+  return apiRequest('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) })
 }
 
 // Set a new password after following the reset link
-export async function resetPassword(newPassword) {
-  const email = sessionStorage.getItem('morrow-reset-email') || ''
-  const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
-  if (user) {
-    user.password = newPassword
-  }
-  sessionStorage.removeItem('morrow-reset-email')
-  return { message: 'Password updated.' }
+export async function resetPassword(newPassword, token, confirmPassword) {
+  return apiRequest('/api/auth/reset-password', {
+    method: 'POST', body: JSON.stringify({ password: newPassword, token, confirmPassword }),
+  })
 }
 
 // =====================================================

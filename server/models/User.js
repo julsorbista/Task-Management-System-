@@ -21,6 +21,14 @@ const userSchema = new mongoose.Schema(
         message: 'Email must be a valid email address.',
       },
     },
+    username: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      sparse: true,
+      match: /^[a-z0-9_]{4,}$/,
+    },
     password: {
       type: String,
       required: true,

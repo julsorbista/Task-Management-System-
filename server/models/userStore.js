@@ -1,74 +1,57 @@
-const crypto = require('crypto')
-
-let users = [
-  {
-    _id: 'u1',
-    name: 'Maya Reyes',
-    username: 'maya',
-    email: 'maya@morrow.app',
-    password: 'morrow123',
-    photo: '',
-  },
-]
-
+// MongoDB is the shared user store for auth and profile routes.
+const mongoose = require('mongoose')
+const User = require('./User')
+const Board = require('./Board')
+const BoardMember = require('./BoardMember')
+const { hashPassword } = require('../utils/password')
 function hidePassword(user) {
   if (!user) return null
-  const { password, ...safeUser } = user
-  return safeUser
+  const data = user.toObject ? user.toObject() : { ...user }
+  delete data.password
+  data._id = String(data._id)
+  return data
 }
-
-function findById(userId) {
-  return users.find((user) => user._id === userId)
+function findById(id) {
+  if (!mongoose.isObjectIdOrHexString(id)) return Promise.resolve(null)
+  return User.findById(id).select('+password')
 }
-
 function findByIdentifier(identifier) {
   const value = identifier.trim().toLowerCase()
-  return users.find((user) => user.email.toLowerCase() === value || user.username.toLowerCase() === value)
+  return User.findOne({ $or: [{ email: value }, { username: value }] }).select('+password')
 }
-
-function isUsernameTaken(username, currentUserId = '') {
-  return users.some(
-    (user) => user._id !== currentUserId && user.username.toLowerCase() === username.trim().toLowerCase()
-  )
+async function isUsernameTaken(username, currentUserId = '') {
+  const query = { username: username.trim().toLowerCase() }
+  if (currentUserId) query._id = { $ne: currentUserId }
+  return Boolean(await User.exists(query))
 }
-
-function isEmailTaken(email, currentUserId = '') {
-  return users.some((user) => user._id !== currentUserId && user.email.toLowerCase() === email.trim().toLowerCase())
+async function isEmailTaken(email, currentUserId = '') {
+  const query = { email: email.trim().toLowerCase() }
+  if (currentUserId) query._id = { $ne: currentUserId }
+  return Boolean(await User.exists(query))
 }
-
-function createUser({ name, username, email, password }) {
-  const user = {
-    _id: crypto.randomUUID(),
-    name: name.trim(),
-    username: username.trim(),
-    email: email.trim(),
-    password,
-    photo: '',
+async function createUser({ name, username, email, password }) {
+  const passwordHash = await hashPassword(password)
+  return mongoose.connection.transaction(async (session) => {
+    const [user] = await User.create([{
+      name: name.trim(), username: username.trim().toLowerCase(),
+      email: email.trim().toLowerCase(), password: passwordHash,
+    }], { session })
+    const [board] = await Board.create([{
+      name: 'My tasks', type: 'private', owner: user._id,
+    }], { session })
+    await BoardMember.create([{
+      board: board._id, user: user._id, role: 'owner',
+    }], { session })
+    return user
+  })
+}
+async function updateUser(id, changes) {
+  const update = {}
+  for (const field of ['name', 'username', 'email', 'photo']) {
+    if (changes[field] !== undefined) update[field] = changes[field]
   }
-
-  users.push(user)
-  return user
+  if (changes.password !== undefined) update.password = await hashPassword(changes.password)
+  return User.findByIdAndUpdate(id, { $set: update }, { new: true, runValidators: true })
 }
-
-function updateUser(userId, changes) {
-  const user = findById(userId)
-  if (!user) return null
-
-  if (changes.name !== undefined) user.name = changes.name.trim()
-  if (changes.username !== undefined) user.username = changes.username.trim()
-  if (changes.email !== undefined) user.email = changes.email.trim()
-  if (changes.photo !== undefined) user.photo = changes.photo
-  if (changes.password !== undefined) user.password = changes.password
-
-  return user
-}
-
-module.exports = {
-  createUser,
-  findById,
-  findByIdentifier,
-  hidePassword,
-  isEmailTaken,
-  isUsernameTaken,
-  updateUser,
-}
+module.exports = { createUser, findById, findByIdentifier, hidePassword,
+  isEmailTaken, isUsernameTaken, updateUser }

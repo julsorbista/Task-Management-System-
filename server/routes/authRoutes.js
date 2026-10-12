@@ -12,19 +12,21 @@ const { sendLoginOtpEmail } = require('../utils/mailer')
 const { createOtpChallenge, verifyOtpChallenge } = require('../utils/otpStore')
 const { validateLogin, validateRegistration } = require('../utils/validation')
 
+const { verifyPassword } = require('../utils/password')
+
 const router = express.Router()
 
-router.post('/register', (req, res) => {
+router.post('/register', async (req, res) => {
   const errors = validateRegistration(req.body)
 
-  if (isUsernameTaken(req.body.username || '')) errors.username = 'This username is already taken.'
-  if (isEmailTaken(req.body.email || '')) errors.email = 'An account with this email already exists.'
+  if (await isUsernameTaken(req.body.username || '')) errors.username = 'This username is already taken.'
+  if (await isEmailTaken(req.body.email || '')) errors.email = 'An account with this email already exists.'
 
   if (Object.keys(errors).length > 0) {
     return res.status(400).json({ message: 'Please fix the highlighted fields.', errors })
   }
 
-  const user = createUser(req.body)
+  const user = await createUser(req.body)
   return res.status(201).json({ user: hidePassword(user), message: 'Account created. Please log in.' })
 })
 
@@ -34,8 +36,8 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ message: 'Please fix the highlighted fields.', errors })
   }
 
-  const user = findByIdentifier(identifier)
-  if (!user || user.password !== req.body.password) {
+  const user = await findByIdentifier(identifier)
+  if (!user || !(await verifyPassword(req.body.password, user.password))) {
     return res.status(401).json({ message: 'Incorrect username/email or password.' })
   }
 
@@ -58,7 +60,7 @@ router.post('/login', async (req, res) => {
   })
 })
 
-router.post('/login/verify-otp', (req, res) => {
+router.post('/login/verify-otp', async (req, res) => {
   const result = verifyOtpChallenge(req.body.challengeId, req.body.otp)
   if (!result.ok) {
     const message =
@@ -66,7 +68,7 @@ router.post('/login/verify-otp', (req, res) => {
     return res.status(401).json({ message })
   }
 
-  const user = findById(result.userId)
+  const user = await findById(result.userId)
   if (!user) {
     return res.status(401).json({ message: 'Account not found.' })
   }

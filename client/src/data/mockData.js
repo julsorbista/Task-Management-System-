@@ -16,13 +16,13 @@ function day(offset) {
 }
 
 // ---------- Users ----------
-// Fields: _id, name, username, email, password, photo
+// Fields: _id, name, email, password, photo
 export const mockUsers = [
-  { _id: 'u1', name: 'Maya Reyes', username: 'maya', email: 'maya@morrow.app', password: 'morrow123', photo: '' },
-  { _id: 'u2', name: 'Daniel Kim', username: 'daniel', email: 'daniel@northfield.co', password: 'password1', photo: '' },
-  { _id: 'u3', name: 'Amara Okafor', username: 'amara', email: 'amara@northfield.co', password: 'password1', photo: '' },
-  { _id: 'u4', name: 'Lucas Silva', username: 'lucas', email: 'lucas@northfield.co', password: 'password1', photo: '' },
-  { _id: 'u5', name: 'Priya Nair', username: 'priya', email: 'priya@northfield.co', password: 'password1', photo: '' },
+  { _id: 'u1', name: 'Maya Reyes', email: 'maya@morrow.app', password: 'morrow123', photo: '' },
+  { _id: 'u2', name: 'Daniel Kim', email: 'daniel@northfield.co', password: 'password1', photo: '' },
+  { _id: 'u3', name: 'Amara Okafor', email: 'amara@northfield.co', password: 'password1', photo: '' },
+  { _id: 'u4', name: 'Lucas Silva', email: 'lucas@northfield.co', password: 'password1', photo: '' },
+  { _id: 'u5', name: 'Priya Nair', email: 'priya@northfield.co', password: 'password1', photo: '' },
 ]
 
 // ---------- Pages ----------

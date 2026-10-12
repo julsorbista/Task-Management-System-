@@ -1,0 +1,105 @@
+.users-page {
+  padding: 24px;
+}
+
+.users-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.users-title {
+  margin: 6px 0 0;
+  font-size: 28px;
+}
+
+.users-count {
+  font-size: 14px;
+  color: #666;
+}
+
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.user-row .avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #e9e7ff;
+  color: #5145a5;
+  font-weight: 600;
+}
+
+.user-row .avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+  overflow-wrap: anywhere;
+}
+
+.user-safe {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-size: 12px;
+}
+
+.users-state {
+  padding: 24px;
+  text-align: center;
+}
+
+.users-state strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 600px) {
+  .users-page {
+    padding: 16px;
+  }
+
+  .users-head {
+    align-items: flex-start;
+  }
+
+  .user-row {
+    flex-wrap: wrap;
+  }
+
+  .user-safe {
+    width: 100%;
+    margin-left: 58px;
+  }
+}

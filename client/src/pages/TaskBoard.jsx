@@ -93,7 +93,7 @@ function TaskBoard() {
   // ---------- Update ----------
   async function handleSaveTask(taskData) {
     if (taskData._id) {
-      await updateTask(taskData._id, taskData)
+      await updateTask(pageId, taskData._id, taskData)
       showToast('Task updated')
     } else {
       await createTask(taskData)
@@ -105,7 +105,7 @@ function TaskBoard() {
 
   // ---------- Delete ----------
   async function handleConfirmDelete() {
-    await deleteTask(taskToDelete._id)
+    await deleteTask(pageId, taskToDelete._id)
     setTaskToDelete(null)
     showToast('Task deleted')
     reloadData()

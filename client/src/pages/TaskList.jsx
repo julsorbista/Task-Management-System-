@@ -114,7 +114,7 @@ function TaskList() {
   // Save the task form (works for both a new task and an edited one)
   async function handleSaveTask(taskData) {
     if (taskData._id) {
-      await updateTask(taskData._id, taskData)
+      await updateTask(pageId, taskData._id, taskData)
       showToast('Task updated')
     } else {
       await createTask(taskData)
@@ -127,7 +127,7 @@ function TaskList() {
   // The checkbox: switch between done and to do
   async function handleToggleDone(task) {
     const newStatus = task.status === 'done' ? 'todo' : 'done'
-    await updateTask(task._id, { status: newStatus })
+    await updateTask(pageId, task._id, { status: newStatus })
     showToast('Task updated')
     reloadData()
   }
@@ -139,7 +139,7 @@ function TaskList() {
 
   // ---------- Delete ----------
   async function handleConfirmDelete() {
-    await deleteTask(taskToDelete._id)
+    await deleteTask(pageId, taskToDelete._id)
     setTaskToDelete(null)
     showToast('Task deleted')
     reloadData()

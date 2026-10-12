@@ -9,7 +9,7 @@ import Icon from '../components/Icon.jsx'
 import ConfirmDelete from '../components/ConfirmDelete.jsx'
 import { showToast } from '../utils/toast.js'
 import { getCurrentUser, updateProfile, changePassword, deleteAccount, logout } from '../api/api.js'
-import { getInitials, isValidEmail, isValidPassword, isValidUsername } from '../utils/helpers.js'
+import { getInitials, isValidEmail, isValidPassword } from '../utils/helpers.js'
 import './Profile.css'
 
 function Profile() {
@@ -17,7 +17,6 @@ function Profile() {
 
   // Profile fields
   const [name, setName] = useState('')
-  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [photo, setPhoto] = useState('')
   const [newPhoto, setNewPhoto] = useState('') // picked but not saved yet ('' = none)
@@ -26,7 +25,6 @@ function Profile() {
   // The name and email as last saved. The "Save changes" button
   // only shows when the fields are different from these.
   const [savedName, setSavedName] = useState('')
-  const [savedUsername, setSavedUsername] = useState('')
   const [savedEmail, setSavedEmail] = useState('')
 
   // Password fields
@@ -51,10 +49,8 @@ function Profile() {
       const user = await getCurrentUser()
       if (!user) return
       setName(user.name)
-      setUsername(user.username)
       setEmail(user.email)
       setSavedName(user.name)
-      setSavedUsername(user.username)
       setSavedEmail(user.email)
       setPhoto(user.photo)
     }
@@ -87,15 +83,11 @@ function Profile() {
 
   // ---------- Name and email ----------
   // True when a new photo, the name or the email was changed and not saved yet
-  const hasProfileChanges = newPhoto !== '' || name !== savedName || username !== savedUsername || email !== savedEmail
+  const hasProfileChanges = newPhoto !== '' || name !== savedName || email !== savedEmail
 
   async function handleSaveProfile() {
     const newErrors = {}
     if (name.trim() === '') newErrors.name = 'Enter your name.'
-    if (username.trim() === '') newErrors.username = 'Enter your username.'
-    else if (!isValidUsername(username)) {
-      newErrors.username = 'Username must be at least 4 characters and use letters, numbers, or underscores.'
-    }
     if (email.trim() === '') newErrors.email = 'Enter your email.'
     if (!isValidEmail(email)) newErrors.email = 'Enter a valid email address.'
 
@@ -103,10 +95,9 @@ function Profile() {
     if (Object.keys(newErrors).length > 0) return
 
     try {
-      await updateProfile({ name: name.trim(), username: username.trim(), email: email.trim() })
+      await updateProfile({ name: name.trim(), email: email.trim() })
     } catch (error) {
-      if (error.message.toLowerCase().includes('username')) setProfileErrors({ username: error.message })
-      else setProfileErrors({ email: error.message })
+      setProfileErrors({ email: error.message })
       return
     }
 
@@ -119,10 +110,8 @@ function Profile() {
 
     // Remember the saved values, so the button hides again
     setName(name.trim())
-    setUsername(username.trim())
     setEmail(email.trim())
     setSavedName(name.trim())
-    setSavedUsername(username.trim())
     setSavedEmail(email.trim())
     showToast('Profile saved')
     setSavedCount(savedCount + 1)
@@ -200,20 +189,6 @@ function Profile() {
               onChange={(event) => setName(event.target.value)}
             />
             {profileErrors.name && <div className="error-text">{profileErrors.name}</div>}
-          </div>
-
-          <div className="field">
-            <label className="label" htmlFor="profile-username">
-              Username
-            </label>
-            <input
-              id="profile-username"
-              type="text"
-              className={profileErrors.username ? 'input has-error' : 'input'}
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-            />
-            {profileErrors.username && <div className="error-text">{profileErrors.username}</div>}
           </div>
 
           <div className="field">

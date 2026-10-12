@@ -1,42 +1,94 @@
 const express = require('express')
-const {
-  createUser,
-  findById,
-  findByIdentifier,
-  hidePassword,
-  isEmailTaken,
-  isUsernameTaken,
-} = require('../models/userStore')
+const mongoose = require('mongoose')
+const Board = require('../models/Board')
+const BoardMember = require('../models/BoardMember')
+const User = require('../models/User')
 const { clearAuthCookie, setAuthCookie } = require('../utils/authCookie')
 const { sendLoginOtpEmail } = require('../utils/mailer')
 const { createOtpChallenge, verifyOtpChallenge } = require('../utils/otpStore')
+const { hashPassword, verifyPassword } = require('../utils/passwordHash')
 const { validateLogin, validateRegistration } = require('../utils/validation')
 
 const router = express.Router()
 
-router.post('/register', (req, res) => {
-  const errors = validateRegistration(req.body)
+function hidePassword(user) {
+  const data = user.toObject()
+  delete data.password
+  return data
+}
 
-  if (isUsernameTaken(req.body.username || '')) errors.username = 'This username is already taken.'
-  if (isEmailTaken(req.body.email || '')) errors.email = 'An account with this email already exists.'
+function isDuplicateEmailError(error) {
+  return error?.code === 11000 && error?.keyPattern?.email
+}
+
+router.post('/register', async (req, res, next) => {
+  const errors = validateRegistration(req.body)
 
   if (Object.keys(errors).length > 0) {
     return res.status(400).json({ message: 'Please fix the highlighted fields.', errors })
   }
 
-  const user = createUser(req.body)
-  return res.status(201).json({ user: hidePassword(user), message: 'Account created. Please log in.' })
+  try {
+    const user = await mongoose.connection.transaction(async (session) => {
+      const [newUser] = await User.create(
+        [
+          {
+            name: req.body.name.trim(),
+            email: req.body.email.trim().toLowerCase(),
+            password: hashPassword(req.body.password),
+            photo: '',
+          },
+        ],
+        { session },
+      )
+
+      const [board] = await Board.create(
+        [
+          {
+            name: 'My tasks',
+            type: 'private',
+            owner: newUser._id,
+          },
+        ],
+        { session },
+      )
+
+      await BoardMember.create(
+        [
+          {
+            board: board._id,
+            user: newUser._id,
+            role: 'owner',
+          },
+        ],
+        { session },
+      )
+
+      return newUser
+    })
+
+    return res.status(201).json({ user: hidePassword(user), message: 'Account created. Please log in.' })
+  } catch (error) {
+    if (isDuplicateEmailError(error)) {
+      return res.status(409).json({
+        message: 'An account with this email already exists.',
+        errors: { email: 'An account with this email already exists.' },
+      })
+    }
+
+    return next(error)
+  }
 })
 
 router.post('/login', async (req, res) => {
-  const { errors, identifier } = validateLogin(req.body)
+  const { errors, email } = validateLogin(req.body)
   if (Object.keys(errors).length > 0) {
     return res.status(400).json({ message: 'Please fix the highlighted fields.', errors })
   }
 
-  const user = findByIdentifier(identifier)
-  if (!user || user.password !== req.body.password) {
-    return res.status(401).json({ message: 'Incorrect username/email or password.' })
+  const user = await User.findOne({ email: email.trim().toLowerCase() }).select('+password')
+  if (!user || !verifyPassword(req.body.password, user.password)) {
+    return res.status(401).json({ message: 'Incorrect email or password.' })
   }
 
   const challenge = createOtpChallenge(user._id)
@@ -58,7 +110,7 @@ router.post('/login', async (req, res) => {
   })
 })
 
-router.post('/login/verify-otp', (req, res) => {
+router.post('/login/verify-otp', async (req, res) => {
   const result = verifyOtpChallenge(req.body.challengeId, req.body.otp)
   if (!result.ok) {
     const message =
@@ -66,7 +118,7 @@ router.post('/login/verify-otp', (req, res) => {
     return res.status(401).json({ message })
   }
 
-  const user = findById(result.userId)
+  const user = await User.findById(result.userId).select('+password')
   if (!user) {
     return res.status(401).json({ message: 'Account not found.' })
   }

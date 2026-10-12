@@ -3,16 +3,16 @@ import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard.jsx'
 import Icon from '../components/Icon.jsx'
 import { login, verifyLoginOtp, getPages } from '../api/api.js'
-import { isValidEmail, isValidPassword, isValidUsername } from '../utils/helpers.js'
+import { isValidEmail, isValidPassword } from '../utils/helpers.js'
 
 function Login() {
   const navigate = useNavigate()
 
-  const [identifier, setIdentifier] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
   // Error messages shown under the fields
-  const [identifierError, setIdentifierError] = useState('')
+  const [emailError, setEmailError] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [otp, setOtp] = useState('')
   const [otpError, setOtpError] = useState('')
@@ -29,24 +29,21 @@ function Login() {
     event.preventDefault() // stop the browser from reloading the page
 
     // 1. Check the fields
-    let newIdentifierError = ''
+    let newEmailError = ''
     let newPasswordError = ''
-    const trimmedIdentifier = identifier.trim()
-    if (trimmedIdentifier === '') newIdentifierError = 'Enter your username or email.'
-    else if (trimmedIdentifier.includes('@') && !isValidEmail(trimmedIdentifier)) newIdentifierError = 'Enter a valid email address.'
-    else if (!trimmedIdentifier.includes('@') && !isValidUsername(trimmedIdentifier)) {
-      newIdentifierError = 'Username must be at least 4 characters and use letters, numbers, or underscores.'
-    }
+    const trimmedEmail = email.trim()
+    if (trimmedEmail === '') newEmailError = 'Enter your email.'
+    else if (!isValidEmail(trimmedEmail)) newEmailError = 'Enter a valid email address.'
     if (password === '') newPasswordError = 'Enter your password.'
     else if (!isValidPassword(password)) newPasswordError = 'Password must be at least 8 characters.'
 
-    setIdentifierError(newIdentifierError)
+    setEmailError(newEmailError)
     setPasswordError(newPasswordError)
-    if (newIdentifierError || newPasswordError) return
+    if (newEmailError || newPasswordError) return
 
     // 2. Check the password and request an OTP
     try {
-      const challenge = await login(trimmedIdentifier, password)
+      const challenge = await login(trimmedEmail, password)
       setOtpChallenge(challenge)
       setOtp('')
       setOtpError('')
@@ -124,18 +121,18 @@ function Login() {
     <AuthCard title="Log in" text="Welcome back. Pick up where you left off.">
       <form onSubmit={handleSubmit} noValidate>
         <div className="field">
-          <label className="label" htmlFor="login-identifier">
-            Username or email
+          <label className="label" htmlFor="login-email">
+            Email
           </label>
           <input
-            id="login-identifier"
-            type="text"
-            className={identifierError ? 'input has-error' : 'input'}
-            value={identifier}
-            onChange={(event) => setIdentifier(event.target.value)}
-            autoComplete="username"
+            id="login-email"
+            type="email"
+            className={emailError ? 'input has-error' : 'input'}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            autoComplete="email"
           />
-          {identifierError && <div className="error-text">{identifierError}</div>}
+          {emailError && <div className="error-text">{emailError}</div>}
         </div>
 
         <div className="field">

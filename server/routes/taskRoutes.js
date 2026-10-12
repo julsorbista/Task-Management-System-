@@ -1,4 +1,4 @@
-const express = require('express')
+﻿const express = require('express')
 const authenticate = require('../middleware/authenticate')
 const {
   canViewBoard,
@@ -6,9 +6,9 @@ const {
 } = require('../middleware/boardPermissions')
 const {
   createTask,
+  deleteTask,
   getTasks,
   updateTask,
-  deleteTask,
 } = require('../controllers/taskController')
 
 const router = express.Router({ mergeParams: true })
@@ -37,7 +37,18 @@ router.post(
   createTask,
 )
 
-router.patch('/:taskId', requireWriteRequest, canEditBoardTasks, updateTask)
-router.delete('/:taskId', requireWriteRequest, canEditBoardTasks, deleteTask)
+router.patch(
+  '/:taskId',
+  requireWriteRequest,
+  canEditBoardTasks,
+  updateTask,
+)
+
+router.delete(
+  '/:taskId',
+  requireWriteRequest,
+  canEditBoardTasks,
+  deleteTask,
+)
 
 module.exports = router

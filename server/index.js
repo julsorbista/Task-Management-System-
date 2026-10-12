@@ -1,4 +1,4 @@
-const path = require('node:path')
+﻿const path = require('node:path')
 
 require('dotenv').config({
   path: path.join(__dirname, '.env'),
@@ -16,6 +16,7 @@ const taskRoutes = require('./routes/taskRoutes')
 const shareLinkRoutes = require('./routes/shareLinkRoutes')
 const dashboardRoutes = require('./routes/dashboardRoutes')
 const exportRoutes = require('./routes/exportRoutes')
+const userRoutes = require('./routes/userRoutes')
 
 const app = express()
 
@@ -37,6 +38,7 @@ app.use('/api/boards/:boardId/tasks', taskRoutes)
 app.use('/api/boards/:boardId/share-links', shareLinkRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/export', exportRoutes)
+app.use('/api/users', userRoutes)
 
 app.use((error, req, res, next) => {
   if (res.headersSent) {

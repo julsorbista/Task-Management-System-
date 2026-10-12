@@ -1,6 +1,8 @@
 const { verifyToken } = require('../utils/jwt')
+const mongoose = require('mongoose')
+const User = require('../models/User')
 
-function authenticate(req, res, next) {
+async function authenticate(req, res, next) {
   const token = req.cookies?.access_token
 
   if (!token) {
@@ -21,6 +23,16 @@ function authenticate(req, res, next) {
     return res.status(401).json({ message: 'Invalid session. Please log in again.' })
   }
 
+  if (!mongoose.isObjectIdOrHexString(payload.sub)) {
+    return res.status(401).json({ message: 'Invalid session. Please log in again.' })
+  }
+  try {
+    if (!(await User.exists({ _id: payload.sub }))) {
+      return res.status(401).json({ message: 'Account no longer exists. Please log in again.' })
+    }
+  } catch (error) {
+    return next(error)
+  }
   req.user = { id: payload.sub }
   return next()
 }

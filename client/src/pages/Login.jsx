@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard.jsx'
 import Icon from '../components/Icon.jsx'
-import { login, verifyLoginOtp, getPages } from '../api/api.js'
+import { login, verifyLoginOtp, getPages, getCurrentUser } from '../api/api.js'
 import { isValidEmail, isValidPassword, isValidUsername } from '../utils/helpers.js'
 
 function Login() {
@@ -18,6 +18,7 @@ function Login() {
   const [otpError, setOtpError] = useState('')
   const [otpChallenge, setOtpChallenge] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   async function openFirstTaskPage() {
     const pages = await getPages()
@@ -27,6 +28,7 @@ function Login() {
 
   async function handleSubmit(event) {
     event.preventDefault() // stop the browser from reloading the page
+    if (isSubmitting) return
 
     // 1. Check the fields
     let newIdentifierError = ''
@@ -45,6 +47,7 @@ function Login() {
     if (newIdentifierError || newPasswordError) return
 
     // 2. Check the password and request an OTP
+    setIsSubmitting(true)
     try {
       const challenge = await login(trimmedIdentifier, password)
       setOtpChallenge(challenge)
@@ -52,11 +55,14 @@ function Login() {
       setOtpError('')
     } catch (error) {
       setPasswordError(error.message)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   async function handleOtpSubmit(event) {
     event.preventDefault()
+    if (isSubmitting) return
 
     const cleanOtp = otp.trim()
     if (!/^\d{6}$/.test(cleanOtp)) {
@@ -64,11 +70,17 @@ function Login() {
       return
     }
 
+    setIsSubmitting(true)
     try {
       await verifyLoginOtp(otpChallenge.challengeId, cleanOtp)
+      if (!(await getCurrentUser())) {
+        throw new Error('Login session could not be established. Please restart login.')
+      }
       await openFirstTaskPage()
     } catch (error) {
       setOtpError(error.message)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -106,13 +118,13 @@ function Login() {
             </div>
           )}
 
-          <button type="submit" className="btn btn-primary btn-wide">
-            Verify and log in
+          <button type="submit" className="btn btn-primary btn-wide" disabled={isSubmitting}>
+            {isSubmitting ? 'Verifying…' : 'Verify and log in'}
           </button>
         </form>
 
         <p className="auth-bottom">
-          <button type="button" className="link" onClick={resetLogin}>
+          <button type="button" className="link" onClick={resetLogin} disabled={isSubmitting}>
             Use a different account
           </button>
         </p>
@@ -168,8 +180,8 @@ function Login() {
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary btn-wide">
-          Log in
+        <button type="submit" className="btn btn-primary btn-wide" disabled={isSubmitting}>
+          {isSubmitting ? 'Sending OTP…' : 'Log in'}
         </button>
       </form>
 

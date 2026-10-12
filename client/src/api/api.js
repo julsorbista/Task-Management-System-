@@ -1,21 +1,4 @@
-﻿// api.js
-// EVERY data function of the app lives in this file.
-//
-// Right now there is no backend, so these functions read and change
-// arrays kept in the browser's memory (they start as copies of mockData.js).
-// Refreshing the browser resets the data.
-//
-// FOR THE BACKEND DEVELOPER:
-// Each function is "async" and returns the same shape a real API would.
-// Replace the body of each function with a fetch call, for example:
-//
-//   export async function getTasks() {
-//     const response = await fetch('/api/tasks')
-//     return response.json()
-//   }
-//
-// The pages only call these functions, so nothing else needs to change.
-
+// Auth and workspace reads use the backend. Remaining mock operations are pending integration.
 import { mockUsers, mockPages, mockTasks, mockNotifications } from '../data/mockData.js'
 
 // ---------- The fake database (kept in memory) ----------
@@ -26,7 +9,7 @@ let notifications = makeCopy(mockNotifications)
 
 // The logged-in user's id is saved in the browser so a refresh keeps you logged in
 let currentUserId = localStorage.getItem('morrow-user-id') || ''
-let loginOtpChallenges = []
+
 
 // ---------- Small helpers used only inside this file ----------
 
@@ -40,13 +23,6 @@ function makeId(prefix) {
   return prefix + '-' + Date.now() + '-' + Math.floor(Math.random() * 1000)
 }
 
-function makeOtp() {
-  return String(Math.floor(100000 + Math.random() * 900000))
-}
-
-function removeExpiredOtpChallenges() {
-  loginOtpChallenges = loginOtpChallenges.filter((challenge) => challenge.expiresAt > Date.now())
-}
 
 async function apiRequest(path, options = {}) {
   const response = await fetch(path, {
@@ -64,9 +40,6 @@ async function apiRequest(path, options = {}) {
   return data
 }
 
-function isNetworkError(error) {
-  return error instanceof TypeError
-}
 
 // Remove the password before sending a user to the screen
 function hidePassword(user) {
@@ -81,129 +54,28 @@ function hidePassword(user) {
 
 // Start login. Throws an error when the username/email or password is wrong.
 export async function login(identifier, password) {
-  try {
-    return await apiRequest('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ identifier, password }),
-    })
-  } catch (error) {
-    if (!isNetworkError(error)) throw error
-  }
-
-  const value = identifier.trim().toLowerCase()
-  const user = users.find((u) => u.email.toLowerCase() === value || u.username.toLowerCase() === value)
-  if (!user || user.password !== password) {
-    throw new Error('Incorrect username/email or password.')
-  }
-
-  removeExpiredOtpChallenges()
-  const otp = makeOtp()
-  const challenge = {
-    _id: makeId('otp'),
-    userId: user._id,
-    otp,
-    expiresAt: Date.now() + 5 * 60 * 1000,
-  }
-  loginOtpChallenges.push(challenge)
-
-  return {
-    otpRequired: true,
-    challengeId: challenge._id,
-    delivery: 'email',
-    destination: user.email,
-    demoOtp: otp,
-  }
+  return apiRequest('/api/auth/login', { method: 'POST', body: JSON.stringify({ identifier, password }) })
 }
 
 // Finish login after the OTP has been entered.
 export async function verifyLoginOtp(challengeId, otp) {
-  try {
-    const data = await apiRequest('/api/auth/login/verify-otp', {
-      method: 'POST',
-      body: JSON.stringify({ challengeId, otp }),
-    })
-    if (data.user?._id) {
-      currentUserId = data.user._id
-      localStorage.setItem('morrow-user-id', data.user._id)
-    }
-    return data.user
-  } catch (error) {
-    if (!isNetworkError(error)) throw error
-  }
-
-  removeExpiredOtpChallenges()
-  const challenge = loginOtpChallenges.find((item) => item._id === challengeId)
-  if (!challenge) {
-    throw new Error('The OTP expired. Please log in again.')
-  }
-  if (challenge.otp !== otp.trim()) {
-    throw new Error('Incorrect OTP code.')
-  }
-
-  loginOtpChallenges = loginOtpChallenges.filter((item) => item._id !== challengeId)
-  currentUserId = challenge.userId
-  localStorage.setItem('morrow-user-id', challenge.userId)
-  const user = users.find((u) => u._id === challenge.userId)
-  return hidePassword(user)
+  const data = await apiRequest('/api/auth/login/verify-otp', {
+    method: 'POST', body: JSON.stringify({ challengeId, otp }),
+  })
+  return data.user
 }
 
 // Create an account and log in. Throws an error when the username or email is taken.
 export async function register(name, username, email, password) {
-  try {
-    const data = await apiRequest('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ name, username, email, password, confirmPassword: password }),
-    })
-
-    if (!users.some((user) => user.email.toLowerCase() === email.trim().toLowerCase())) {
-      const user = {
-        _id: data.user?._id || makeId('u'),
-        name: name.trim(),
-        username: username.trim(),
-        email: email.trim(),
-        password,
-        photo: '',
-      }
-      users.push(user)
-      pages.push({
-        _id: makeId('p'),
-        name: 'My tasks',
-        type: 'private',
-        owner: user._id,
-        members: [{ user: user._id, role: 'owner' }],
-      })
-    }
-
-    return data.user
-  } catch (error) {
-    if (!isNetworkError(error)) throw error
-  }
-
-  const usernameTaken = users.some((u) => u.username.toLowerCase() === username.trim().toLowerCase())
-  const emailTaken = users.some((u) => u.email.toLowerCase() === email.trim().toLowerCase())
-  if (usernameTaken) {
-    throw new Error('This username is already taken.')
-  }
-  if (emailTaken) {
-    throw new Error('An account with this email already exists.')
-  }
-  const newUser = { _id: makeId('u'), name: name.trim(), username: username.trim(), email: email.trim(), password, photo: '' }
-  users.push(newUser)
-
-  // Every new user starts with one private page
-  pages.push({
-    _id: makeId('p'),
-    name: 'My tasks',
-    type: 'private',
-    owner: newUser._id,
-    members: [{ user: newUser._id, role: 'owner' }],
+  const data = await apiRequest('/api/auth/register', {
+    method: 'POST', body: JSON.stringify({ name, username, email, password, confirmPassword: password }),
   })
-
-  return hidePassword(newUser)
+  return data.user
 }
 
 // Log out
 export async function logout() {
+  await apiRequest('/api/auth/logout', { method: 'POST', body: '{}' })
   currentUserId = ''
   localStorage.removeItem('morrow-user-id')
 }
@@ -313,8 +185,7 @@ export async function deleteAccount() {
 
 // Pages the logged-in user can see
 export async function getPages() {
-  const myPages = pages.filter((p) => p.members.some((m) => m.user === currentUserId))
-  return makeCopy(myPages)
+  return apiRequest('/api/boards')
 }
 
 // One page by id, or null when it does not exist
@@ -439,8 +310,9 @@ async function readApiJson(response, fallbackMessage) {
 
 // Every task on the pages the logged-in user can see
 export async function getTasks() {
-  const myPageIds = pages.filter((p) => p.members.some((m) => m.user === currentUserId)).map((p) => p._id)
-  return makeCopy(tasks.filter((t) => myPageIds.includes(t.page)))
+  const boards = await getPages()
+  const lists = await Promise.all(boards.map((board) => getTasksByPage(board._id)))
+  return lists.flat()
 }
 
 // The tasks of one page
@@ -514,7 +386,8 @@ export async function deleteTask(pageId, taskId) {
 
 // The logged-in user's notifications
 export async function getNotifications() {
-  return makeCopy(notifications.filter((n) => n.user === currentUserId))
+  const data = await apiRequest('/api/users/notifications')
+  return data.notifications
 }
 
 // Mark one notification as read (true) or unread (false)

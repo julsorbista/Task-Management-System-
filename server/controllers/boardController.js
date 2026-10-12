@@ -1,6 +1,22 @@
 const mongoose = require('mongoose')
 const Board = require('../models/Board')
 const BoardMember = require('../models/BoardMember')
+const Notification = require('../models/Notification')
+const User = require('../models/User')
+
+async function formatBoardWithMembers(board) {
+  const members = await BoardMember.find({ board: board._id })
+    .select('user role')
+    .lean()
+
+  const data = board.toObject()
+  data.members = members.map((member) => ({
+    user: String(member.user),
+    role: member.role,
+  }))
+
+  return data
+}
 
 async function createBoard(req, res, next) {
   const { name, type = 'private' } = req.body || {}
@@ -82,17 +98,101 @@ async function getBoards(req, res, next) {
 
 async function getBoard(req, res, next) {
   try {
-    const members = await BoardMember.find({ board: req.board._id })
-      .select('user role')
-      .lean()
+    return res.json(await formatBoardWithMembers(req.board))
+  } catch (error) {
+    return next(error)
+  }
+}
 
-    const board = req.board.toObject()
-    board.members = members.map((member) => ({
-      user: String(member.user),
-      role: member.role,
-    }))
+async function inviteBoardMember(req, res, next) {
+  const { email, role } = req.body || {}
 
-    return res.json(board)
+  if (req.board.type !== 'shared') {
+    return res.status(400).json({ message: 'Only shared boards can have invited members.' })
+  }
+
+  if (typeof email !== 'string' || !email.trim()) {
+    return res.status(400).json({ message: 'Email is required.' })
+  }
+
+  if (!['editor', 'viewer'].includes(role)) {
+    return res.status(400).json({ message: 'Role must be editor or viewer.' })
+  }
+
+  try {
+    const invitedUser = await User.findOne({
+      email: email.trim().toLowerCase(),
+    }).select('_id')
+
+    if (!invitedUser) {
+      return res.status(404).json({
+        message: 'This user is not registered yet. Ask them to create an account first.',
+      })
+    }
+
+    if (String(invitedUser._id) === String(req.board.owner)) {
+      return res.status(400).json({ message: 'The board owner already has access.' })
+    }
+
+    const existingMember = await BoardMember.exists({
+      board: req.board._id,
+      user: invitedUser._id,
+    })
+
+    if (existingMember) {
+      return res.status(409).json({ message: 'This person already has access.' })
+    }
+
+    await BoardMember.create({
+      board: req.board._id,
+      user: invitedUser._id,
+      role,
+    })
+
+    await Notification.create({
+      user: invitedUser._id,
+      title: 'Board shared',
+      message: `You were invited to "${req.board.name}".`,
+      type: 'shared',
+    })
+
+    return res.status(201).json(await formatBoardWithMembers(req.board))
+  } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(409).json({ message: 'This person already has access.' })
+    }
+
+    return next(error)
+  }
+}
+
+async function removeBoardMember(req, res, next) {
+  const { userId } = req.params
+
+  if (req.board.type !== 'shared') {
+    return res.status(400).json({ message: 'Only shared boards can have members removed.' })
+  }
+
+  if (!mongoose.isObjectIdOrHexString(userId)) {
+    return res.status(400).json({ message: 'Invalid user ID.' })
+  }
+
+  if (String(userId) === String(req.board.owner)) {
+    return res.status(400).json({ message: 'The board owner cannot be removed.' })
+  }
+
+  try {
+    const member = await BoardMember.findOneAndDelete({
+      board: req.board._id,
+      user: userId,
+      role: { $ne: 'owner' },
+    })
+
+    if (!member) {
+      return res.status(404).json({ message: 'Board member not found.' })
+    }
+
+    return res.status(200).json(await formatBoardWithMembers(req.board))
   } catch (error) {
     return next(error)
   }
@@ -150,6 +250,8 @@ module.exports = {
   createBoard,
   getBoards,
   getBoard,
+  inviteBoardMember,
+  removeBoardMember,
   updateBoard,
   deleteBoard,
 }

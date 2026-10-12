@@ -53,7 +53,49 @@ async function markNotificationAsRead(req, res, next) {
   }
 }
 
+async function markAllNotificationsAsRead(req, res, next) {
+  try {
+    const result = await Notification.updateMany(
+      {
+        user: req.user.id,
+        isRead: false,
+      },
+      {
+        $set: { isRead: true },
+      },
+      {
+        runValidators: true,
+      },
+    )
+
+    res.status(200).json({
+      message: 'Notifications marked as read.',
+      modifiedCount: result.modifiedCount,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+async function clearReadNotifications(req, res, next) {
+  try {
+    const result = await Notification.deleteMany({
+      user: req.user.id,
+      isRead: true,
+    })
+
+    res.status(200).json({
+      message: 'Read notifications cleared.',
+      deletedCount: result.deletedCount,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
+  clearReadNotifications,
   getNotifications,
+  markAllNotificationsAsRead,
   markNotificationAsRead,
 }

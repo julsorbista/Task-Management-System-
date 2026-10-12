@@ -26,7 +26,6 @@ let notifications = makeCopy(mockNotifications)
 
 // The logged-in user's id is saved in the browser so a refresh keeps you logged in
 let currentUserId = localStorage.getItem('morrow-user-id') || ''
-let loginOtpChallenges = []
 
 // ---------- Small helpers used only inside this file ----------
 
@@ -38,14 +37,6 @@ function makeCopy(value) {
 // Make a new unique id (the real database will do this itself)
 function makeId(prefix) {
   return prefix + '-' + Date.now() + '-' + Math.floor(Math.random() * 1000)
-}
-
-function makeOtp() {
-  return String(Math.floor(100000 + Math.random() * 900000))
-}
-
-function removeExpiredOtpChallenges() {
-  loginOtpChallenges = loginOtpChallenges.filter((challenge) => challenge.expiresAt > Date.now())
 }
 
 async function apiRequest(path, options = {}) {
@@ -64,142 +55,39 @@ async function apiRequest(path, options = {}) {
   return data
 }
 
-function isNetworkError(error) {
-  return error instanceof TypeError
-}
-
-// Remove the password before sending a user to the screen
-function hidePassword(user) {
-  const copy = makeCopy(user)
-  delete copy.password
-  return copy
-}
-
 // =====================================================
 // AUTH
 // =====================================================
 
 // Start login. Throws an error when the username/email or password is wrong.
 export async function login(identifier, password) {
-  try {
-    return await apiRequest('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ identifier, password }),
-    })
-  } catch (error) {
-    if (!isNetworkError(error)) throw error
-  }
-
-  const value = identifier.trim().toLowerCase()
-  const user = users.find((u) => u.email.toLowerCase() === value || u.username.toLowerCase() === value)
-  if (!user || user.password !== password) {
-    throw new Error('Incorrect username/email or password.')
-  }
-
-  removeExpiredOtpChallenges()
-  const otp = makeOtp()
-  const challenge = {
-    _id: makeId('otp'),
-    userId: user._id,
-    otp,
-    expiresAt: Date.now() + 5 * 60 * 1000,
-  }
-  loginOtpChallenges.push(challenge)
-
-  return {
-    otpRequired: true,
-    challengeId: challenge._id,
-    delivery: 'email',
-    destination: user.email,
-    demoOtp: otp,
-  }
+  return apiRequest('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ identifier, password }),
+  })
 }
 
 // Finish login after the OTP has been entered.
 export async function verifyLoginOtp(challengeId, otp) {
-  try {
-    const data = await apiRequest('/api/auth/login/verify-otp', {
-      method: 'POST',
-      body: JSON.stringify({ challengeId, otp }),
-    })
-    if (data.user?._id) {
-      currentUserId = data.user._id
-      localStorage.setItem('morrow-user-id', data.user._id)
-    }
-    return data.user
-  } catch (error) {
-    if (!isNetworkError(error)) throw error
+  const data = await apiRequest('/api/auth/login/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify({ challengeId, otp }),
+  })
+  if (data.user?._id) {
+    currentUserId = data.user._id
+    localStorage.setItem('morrow-user-id', data.user._id)
   }
-
-  removeExpiredOtpChallenges()
-  const challenge = loginOtpChallenges.find((item) => item._id === challengeId)
-  if (!challenge) {
-    throw new Error('The OTP expired. Please log in again.')
-  }
-  if (challenge.otp !== otp.trim()) {
-    throw new Error('Incorrect OTP code.')
-  }
-
-  loginOtpChallenges = loginOtpChallenges.filter((item) => item._id !== challengeId)
-  currentUserId = challenge.userId
-  localStorage.setItem('morrow-user-id', challenge.userId)
-  const user = users.find((u) => u._id === challenge.userId)
-  return hidePassword(user)
+  return data.user
 }
 
 // Create an account and log in. Throws an error when the username or email is taken.
 export async function register(name, username, email, password) {
-  try {
-    const data = await apiRequest('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ name, username, email, password, confirmPassword: password }),
-    })
-
-    if (!users.some((user) => user.email.toLowerCase() === email.trim().toLowerCase())) {
-      const user = {
-        _id: data.user?._id || makeId('u'),
-        name: name.trim(),
-        username: username.trim(),
-        email: email.trim(),
-        password,
-        photo: '',
-      }
-      users.push(user)
-      pages.push({
-        _id: makeId('p'),
-        name: 'My tasks',
-        type: 'private',
-        owner: user._id,
-        members: [{ user: user._id, role: 'owner' }],
-      })
-    }
-
-    return data.user
-  } catch (error) {
-    if (!isNetworkError(error)) throw error
-  }
-
-  const usernameTaken = users.some((u) => u.username.toLowerCase() === username.trim().toLowerCase())
-  const emailTaken = users.some((u) => u.email.toLowerCase() === email.trim().toLowerCase())
-  if (usernameTaken) {
-    throw new Error('This username is already taken.')
-  }
-  if (emailTaken) {
-    throw new Error('An account with this email already exists.')
-  }
-  const newUser = { _id: makeId('u'), name: name.trim(), username: username.trim(), email: email.trim(), password, photo: '' }
-  users.push(newUser)
-
-  // Every new user starts with one private page
-  pages.push({
-    _id: makeId('p'),
-    name: 'My tasks',
-    type: 'private',
-    owner: newUser._id,
-    members: [{ user: newUser._id, role: 'owner' }],
+  const data = await apiRequest('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ name, username, email, password, confirmPassword: password }),
   })
 
-  return hidePassword(newUser)
+  return data.user
 }
 
 // Log out
@@ -313,8 +201,11 @@ export async function deleteAccount() {
 
 // Pages the logged-in user can see
 export async function getPages() {
-  const myPages = pages.filter((p) => p.members.some((m) => m.user === currentUserId))
-  return makeCopy(myPages)
+  const response = await fetch('/api/boards', {
+    credentials: 'include',
+  })
+
+  return readApiJson(response, 'Failed to load pages.')
 }
 
 // One page by id, or null when it does not exist
@@ -332,28 +223,49 @@ export async function getPage(pageId) {
 
 // Add a page. type is 'private' or 'shared'.
 export async function createPage(name, type) {
-  const newPage = {
-    _id: makeId('p'),
-    name,
-    type,
-    owner: currentUserId,
-    members: [{ user: currentUserId, role: 'owner' }],
-  }
-  pages.push(newPage)
-  return makeCopy(newPage)
+  const response = await fetch('/api/boards', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: JSON.stringify({ name, type }),
+  })
+
+  return readApiJson(response, 'Failed to create page.')
 }
 
 // Rename a page
 export async function renamePage(pageId, newName) {
-  const page = pages.find((p) => p._id === pageId)
-  page.name = newName
-  return makeCopy(page)
+  const response = await fetch(`/api/boards/${pageId}`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: JSON.stringify({ name: newName }),
+  })
+
+  return readApiJson(response, 'Failed to rename page.')
 }
 
 // Delete a page and every task on it
 export async function deletePage(pageId) {
-  pages = pages.filter((p) => p._id !== pageId)
-  tasks = tasks.filter((t) => t.page !== pageId)
+  const response = await fetch(`/api/boards/${pageId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.message || 'Failed to delete page.')
+  }
 }
 
 // =====================================================
@@ -363,21 +275,17 @@ export async function deletePage(pageId) {
 // Invite someone by email. role is 'editor' or 'viewer'.
 // Throws an error when the person already has access.
 export async function inviteMember(pageId, email, role) {
-  const page = pages.find((p) => p._id === pageId)
-  let user = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase())
+  const response = await fetch(`/api/boards/${pageId}/members`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: JSON.stringify({ email, role }),
+  })
 
-  // If nobody has this email yet, make a simple user from the email address
-  if (!user) {
-    const nameFromEmail = email.trim().split('@')[0]
-    user = { _id: makeId('u'), name: nameFromEmail, username: makeId('guest'), email: email.trim(), password: '', photo: '' }
-    users.push(user)
-  }
-
-  if (page.members.some((m) => m.user === user._id)) {
-    throw new Error('This person already has access.')
-  }
-  page.members.push({ user: user._id, role })
-  return makeCopy(page)
+  return readApiJson(response, 'Failed to invite member.')
 }
 
 // Change a member's role to 'editor' or 'viewer'
@@ -388,14 +296,18 @@ export async function updateMemberRole(pageId, userId, role) {
   return makeCopy(page)
 }
 
-// Remove a member from a page. Their tasks on that page become unassigned.
+// Remove a member from a shared page.
 export async function removeMember(pageId, userId) {
-  const page = pages.find((p) => p._id === pageId)
-  page.members = page.members.filter((m) => m.user !== userId)
-  tasks.forEach((t) => {
-    if (t.page === pageId && t.assignee === userId) t.assignee = ''
+  const response = await fetch(`/api/boards/${pageId}/members/${userId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
   })
-  return makeCopy(page)
+
+  return readApiJson(response, 'Failed to remove member.')
 }
 
 // =====================================================
@@ -425,6 +337,38 @@ function taskPayload(taskData) {
   }
 
   return payload
+}
+
+function notificationTimeLabel(notification) {
+  if (notification.timeLabel) return notification.timeLabel
+  if (!notification.createdAt) return ''
+
+  const createdAt = new Date(notification.createdAt)
+  if (Number.isNaN(createdAt.getTime())) return ''
+
+  const secondsAgo = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / 1000))
+  if (secondsAgo < 60) return 'Just now'
+
+  const minutesAgo = Math.floor(secondsAgo / 60)
+  if (minutesAgo < 60) return minutesAgo + (minutesAgo === 1 ? ' minute ago' : ' minutes ago')
+
+  const hoursAgo = Math.floor(minutesAgo / 60)
+  if (hoursAgo < 24) return hoursAgo + (hoursAgo === 1 ? ' hour ago' : ' hours ago')
+
+  const daysAgo = Math.floor(hoursAgo / 24)
+  if (daysAgo === 1) return 'Yesterday'
+  return daysAgo + ' days ago'
+}
+
+function formatNotification(notification) {
+  return {
+    ...notification,
+    _id: String(notification._id),
+    user: notification.user ? String(notification.user) : '',
+    task: notification.task ? String(notification.task) : '',
+    page: notification.page ? String(notification.page) : '',
+    timeLabel: notificationTimeLabel(notification),
+  }
 }
 
 async function readApiJson(response, fallbackMessage) {
@@ -514,25 +458,60 @@ export async function deleteTask(pageId, taskId) {
 
 // The logged-in user's notifications
 export async function getNotifications() {
-  return makeCopy(notifications.filter((n) => n.user === currentUserId))
+  const response = await fetch('/api/users/notifications', {
+    credentials: 'include',
+  })
+
+  const data = await readApiJson(response, 'Failed to load notifications.')
+  return (data.notifications || []).map(formatNotification)
 }
 
 // Mark one notification as read (true) or unread (false)
 export async function setNotificationRead(notificationId, isRead) {
-  const notification = notifications.find((n) => n._id === notificationId)
-  notification.isRead = isRead
-  return makeCopy(notification)
+  if (!isRead) {
+    throw new Error('Notifications can only be marked as read right now.')
+  }
+
+  const response = await fetch(`/api/users/notifications/${notificationId}/read`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: JSON.stringify({ isRead: true }),
+  })
+
+  const data = await readApiJson(response, 'Failed to mark notification as read.')
+  return formatNotification(data.notification)
 }
 
 // Mark all of the user's notifications as read
 export async function markAllNotificationsRead() {
-  notifications.forEach((n) => {
-    if (n.user === currentUserId) n.isRead = true
+  const response = await fetch('/api/users/notifications/read-all', {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: JSON.stringify({}),
   })
+
+  return readApiJson(response, 'Failed to mark notifications as read.')
 }
 
 // Remove every notification that is already read
 export async function clearReadNotifications() {
-  notifications = notifications.filter((n) => !(n.user === currentUserId && n.isRead))
+  const response = await fetch('/api/users/notifications/read', {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+  })
+
+  return readApiJson(response, 'Failed to clear read notifications.')
 }
 

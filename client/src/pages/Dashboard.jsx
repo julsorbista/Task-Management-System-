@@ -15,14 +15,28 @@ function Dashboard() {
   const [pages, setPages] = useState([])
   const [users, setUsers] = useState([])
   const [isExportOpen, setIsExportOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
+    let active = true
     async function loadData() {
-      setTasks(await getTasks())
-      setPages(await getPages())
-      setUsers(await getUsers())
+      try {
+        const [loadedTasks, loadedPages, loadedUsers] = await Promise.all([
+          getTasks(), getPages(), getUsers(),
+        ])
+        if (!active) return
+        setTasks(loadedTasks)
+        setPages(loadedPages)
+        setUsers(loadedUsers)
+      } catch (error) {
+        if (active) setLoadError(error.message || 'Failed to load dashboard.')
+      } finally {
+        if (active) setIsLoading(false)
+      }
     }
     loadData()
+    return () => { active = false }
   }, [])
 
   // ---------- Numbers for the four tiles ----------
@@ -86,12 +100,15 @@ function Dashboard() {
           <h1 className="page-title">Dashboard</h1>
           <p className="muted dashboard-subtitle">All Private and Shared tasks, as of today.</p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={() => setIsExportOpen(true)}>
+        <button type="button" className="btn btn-primary" disabled={isLoading || Boolean(loadError)} onClick={() => setIsExportOpen(true)}>
           <Icon name="download" />
           Export
         </button>
       </div>
 
+      {isLoading && <p role="status">Loading dashboard…</p>}
+      {loadError && <p role="alert" className="error-text">{loadError}</p>}
+      {!isLoading && !loadError && <>
       {/* Four number tiles */}
       <div className="dashboard-tiles">
         <div className="panel">
@@ -196,6 +213,7 @@ function Dashboard() {
         </div>
       </div>
 
+      </>}
       {isExportOpen && <ExportModal tasks={tasks} pages={pages} users={users} onClose={() => setIsExportOpen(false)} />}
     </Layout>
   )

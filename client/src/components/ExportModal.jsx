@@ -8,16 +8,15 @@
 import { useState } from 'react'
 import Icon from './Icon.jsx'
 import { showToast } from '../utils/toast.js'
-import { PRIORITY_LABELS, STATUS_LABELS, formatDue, isOverdue, addDays, todayString } from '../utils/helpers.js'
+import { PRIORITY_LABELS, STATUS_LABELS, formatDue, isOverdue } from '../utils/helpers.js'
 import './ExportModal.css'
 
 function ExportModal({ tasks, pages, users, onClose }) {
-  const today = todayString()
 
   const [format, setFormat] = useState('csv') // 'csv' or 'pdf'
   const [mode, setMode] = useState('all') // 'all' or 'selected'
-  const [dateFrom, setDateFrom] = useState(addDays(today, -30))
-  const [dateTo, setDateTo] = useState(addDays(today, 30))
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [scope, setScope] = useState('both') // 'both', 'private' or 'shared'
   const [searchText, setSearchText] = useState('')
   const [selectedIds, setSelectedIds] = useState([]) // ids of the ticked tasks
@@ -36,7 +35,7 @@ function ExportModal({ tasks, pages, users, onClose }) {
     if (scope === 'private' && page.type !== 'private') return false
     if (scope === 'shared' && page.type !== 'shared') return false
     if (dateFrom === '' && dateTo === '') return true
-    if (task.dueDate === '') return false
+    if (!task.dueDate) return false
     if (dateFrom !== '' && task.dueDate < dateFrom) return false
     if (dateTo !== '' && task.dueDate > dateTo) return false
     return true
@@ -100,10 +99,12 @@ function ExportModal({ tasks, pages, users, onClose }) {
   function downloadCsv() {
     // Wrap each value in quotes so commas inside a value do not break the file
     function quote(value) {
-      return '"' + String(value).replaceAll('"', '""') + '"'
+      let text = String(value ?? '')
+      if (/^[\s]*[=+@-]|^[\t\r\n]/.test(text)) text = "'" + text
+      return '"' + text.replaceAll('"', '""') + '"'
     }
     const lines = [COLUMN_NAMES, ...buildRows()].map((row) => row.map(quote).join(','))
-    const file = new Blob([lines.join('\n')], { type: 'text/csv' })
+    const file = new Blob(['\uFEFF', lines.join('\r\n')], { type: 'text/csv;charset=utf-8' })
 
     // Make a temporary link to the file and click it
     const link = document.createElement('a')
@@ -147,8 +148,12 @@ function ExportModal({ tasks, pages, users, onClose }) {
     let isFinished = true
     if (format === 'csv') downloadCsv()
     else isFinished = openPrintablePage()
-    if (isFinished) showToast('Export finished')
-    onClose()
+    if (isFinished) {
+      showToast(format === 'csv' ? 'CSV downloaded' : 'Choose Save as PDF in the print dialog')
+      onClose()
+    } else {
+      showToast('Allow pop-ups to open the PDF print window.')
+    }
   }
 
   // Text beside the Export button, for example "5 tasks selected"
@@ -275,6 +280,7 @@ function ExportModal({ tasks, pages, users, onClose }) {
           </div>
         </div>
         {isDateRangeWrong && <div className="error-text export-date-error">The start date must be before the end date.</div>}
+        <p className="small-text">Leave both dates blank to include tasks with no due date.</p>
 
         {/* Scope */}
         <div className="field">

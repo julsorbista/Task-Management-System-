@@ -1,9 +1,8 @@
 // api.js
 // EVERY data function of the app lives in this file.
 //
-// Right now there is no backend, so these functions read and change
-// arrays kept in the browser's memory (they start as copies of mockData.js).
-// Refreshing the browser resets the data.
+// Auth, boards, tasks, and notifications use the backend.
+// Some remaining account operations still use mock data.
 //
 // FOR THE BACKEND DEVELOPER:
 // Each function is "async" and returns the same shape a real API would.
@@ -290,10 +289,16 @@ export async function inviteMember(pageId, email, role) {
 
 // Change a member's role to 'editor' or 'viewer'
 export async function updateMemberRole(pageId, userId, role) {
-  const page = pages.find((p) => p._id === pageId)
-  const member = page.members.find((m) => m.user === userId)
-  member.role = role
-  return makeCopy(page)
+  const response = await fetch(`/api/boards/${pageId}/members/${userId}`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: JSON.stringify({ role }),
+  })
+  return readApiJson(response, 'Failed to change member role.')
 }
 
 // Remove a member from a shared page.
@@ -383,8 +388,9 @@ async function readApiJson(response, fallbackMessage) {
 
 // Every task on the pages the logged-in user can see
 export async function getTasks() {
-  const myPageIds = pages.filter((p) => p.members.some((m) => m.user === currentUserId)).map((p) => p._id)
-  return makeCopy(tasks.filter((t) => myPageIds.includes(t.page)))
+  const boards = await getPages()
+  const lists = await Promise.all(boards.map((board) => getTasksByPage(board._id)))
+  return lists.flat()
 }
 
 // The tasks of one page

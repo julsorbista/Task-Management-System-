@@ -3,6 +3,7 @@ const Board = require('../models/Board')
 const BoardMember = require('../models/BoardMember')
 const Notification = require('../models/Notification')
 const User = require('../models/User')
+const Task = require('../models/Task')
 
 async function formatBoardWithMembers(board) {
   const members = await BoardMember.find({ board: board._id })
@@ -182,10 +183,19 @@ async function removeBoardMember(req, res, next) {
   }
 
   try {
-    const member = await BoardMember.findOneAndDelete({
-      board: req.board._id,
-      user: userId,
-      role: { $ne: 'owner' },
+    const member = await mongoose.connection.transaction(async (session) => {
+      const removed = await BoardMember.findOneAndDelete({
+        board: req.board._id,
+        user: userId,
+        role: { $in: ['editor', 'viewer'] },
+      }, { session })
+      if (!removed) return null
+      await Task.updateMany(
+        { board: req.board._id, assignee: userId },
+        { $set: { assignee: null } },
+        { session },
+      )
+      return removed
     })
 
     if (!member) {
@@ -193,6 +203,34 @@ async function removeBoardMember(req, res, next) {
     }
 
     return res.status(200).json(await formatBoardWithMembers(req.board))
+  } catch (error) {
+    return next(error)
+  }
+}
+
+async function updateBoardMemberRole(req, res, next) {
+  const { userId } = req.params
+  const { role } = req.body || {}
+  if (req.board.type !== 'shared') {
+    return res.status(400).json({ message: 'Only shared boards can have member roles changed.' })
+  }
+  if (!mongoose.isObjectIdOrHexString(userId)) {
+    return res.status(400).json({ message: 'Invalid user ID.' })
+  }
+  if (String(userId) === String(req.board.owner)) {
+    return res.status(400).json({ message: 'The board owner role cannot be changed.' })
+  }
+  if (!['editor', 'viewer'].includes(role)) {
+    return res.status(400).json({ message: 'Role must be editor or viewer.' })
+  }
+  try {
+    const member = await BoardMember.findOneAndUpdate(
+      { board: req.board._id, user: userId, role: { $in: ['editor', 'viewer'] } },
+      { $set: { role } },
+      { new: true, runValidators: true },
+    )
+    if (!member) return res.status(404).json({ message: 'Board member not found.' })
+    return res.json(await formatBoardWithMembers(req.board))
   } catch (error) {
     return next(error)
   }
@@ -252,6 +290,7 @@ module.exports = {
   getBoard,
   inviteBoardMember,
   removeBoardMember,
+  updateBoardMemberRole,
   updateBoard,
   deleteBoard,
 }

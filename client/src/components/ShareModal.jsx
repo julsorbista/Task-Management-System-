@@ -60,8 +60,12 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
 
   // Change a person's role
   async function handleRoleChange(userId, newRole) {
-    await updateMemberRole(boardId, userId, newRole)
-    onChanged()
+    try {
+      await updateMemberRole(boardId, userId, newRole)
+      onChanged()
+    } catch (error) {
+      showToast(error.message || 'Failed to change member role.')
+    }
   }
 
   // Remove a person (after the confirmation)

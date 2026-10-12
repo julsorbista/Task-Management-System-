@@ -2,64 +2,140 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard.jsx'
 import Icon from '../components/Icon.jsx'
-import { login, getPages } from '../api/api.js'
-import { isValidEmail } from '../utils/helpers.js'
+import { login, verifyLoginOtp, getPages } from '../api/api.js'
+import { isValidEmail, isValidPassword, isValidUsername } from '../utils/helpers.js'
 
 function Login() {
   const navigate = useNavigate()
 
-  // The demo account is filled in so you can log in right away.
-  // Remove these two values when the real backend is connected.
-  const [email, setEmail] = useState('maya@morrow.app')
-  const [password, setPassword] = useState('morrow123')
+  const [identifier, setIdentifier] = useState('')
+  const [password, setPassword] = useState('')
 
   // Error messages shown under the fields
-  const [emailError, setEmailError] = useState('')
+  const [identifierError, setIdentifierError] = useState('')
   const [passwordError, setPasswordError] = useState('')
+  const [otp, setOtp] = useState('')
+  const [otpError, setOtpError] = useState('')
+  const [otpChallenge, setOtpChallenge] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
+
+  async function openFirstTaskPage() {
+    const pages = await getPages()
+    if (pages.length > 0) navigate('/pages/' + pages[0]._id + '/list')
+    else navigate('/dashboard')
+  }
 
   async function handleSubmit(event) {
     event.preventDefault() // stop the browser from reloading the page
 
     // 1. Check the fields
-    let newEmailError = ''
+    let newIdentifierError = ''
     let newPasswordError = ''
-    if (email.trim() === '') newEmailError = 'Enter your email.'
-    else if (!isValidEmail(email)) newEmailError = 'Enter a valid email address.'
+    const trimmedIdentifier = identifier.trim()
+    if (trimmedIdentifier === '') newIdentifierError = 'Enter your username or email.'
+    else if (trimmedIdentifier.includes('@') && !isValidEmail(trimmedIdentifier)) newIdentifierError = 'Enter a valid email address.'
+    else if (!trimmedIdentifier.includes('@') && !isValidUsername(trimmedIdentifier)) {
+      newIdentifierError = 'Username must be at least 4 characters and use letters, numbers, or underscores.'
+    }
     if (password === '') newPasswordError = 'Enter your password.'
+    else if (!isValidPassword(password)) newPasswordError = 'Password must be at least 8 characters.'
 
-    setEmailError(newEmailError)
+    setIdentifierError(newIdentifierError)
     setPasswordError(newPasswordError)
-    if (newEmailError || newPasswordError) return
+    if (newIdentifierError || newPasswordError) return
 
-    // 2. Try to log in
+    // 2. Check the password and request an OTP
     try {
-      await login(email, password)
-      // 3. Open the first page of tasks
-      const pages = await getPages()
-      if (pages.length > 0) navigate('/pages/' + pages[0]._id + '/list')
-      else navigate('/dashboard')
+      const challenge = await login(trimmedIdentifier, password)
+      setOtpChallenge(challenge)
+      setOtp('')
+      setOtpError('')
     } catch (error) {
       setPasswordError(error.message)
     }
+  }
+
+  async function handleOtpSubmit(event) {
+    event.preventDefault()
+
+    const cleanOtp = otp.trim()
+    if (!/^\d{6}$/.test(cleanOtp)) {
+      setOtpError('Enter the 6-digit OTP code.')
+      return
+    }
+
+    try {
+      await verifyLoginOtp(otpChallenge.challengeId, cleanOtp)
+      await openFirstTaskPage()
+    } catch (error) {
+      setOtpError(error.message)
+    }
+  }
+
+  function resetLogin() {
+    setOtpChallenge(null)
+    setOtp('')
+    setOtpError('')
+  }
+
+  if (otpChallenge) {
+    return (
+      <AuthCard title="Enter OTP" text={'We sent a 6-digit code to ' + otpChallenge.destination + '.'}>
+        <form onSubmit={handleOtpSubmit} noValidate>
+          <div className="field">
+            <label className="label" htmlFor="login-otp">
+              OTP code
+            </label>
+            <input
+              id="login-otp"
+              type="text"
+              inputMode="numeric"
+              maxLength="6"
+              className={otpError ? 'input otp-input has-error' : 'input otp-input'}
+              value={otp}
+              onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
+              autoComplete="one-time-code"
+              autoFocus
+            />
+            {otpError && <div className="error-text">{otpError}</div>}
+          </div>
+
+          {otpChallenge.demoOtp && (
+            <div className="auth-note">
+              Demo OTP: <strong>{otpChallenge.demoOtp}</strong>
+            </div>
+          )}
+
+          <button type="submit" className="btn btn-primary btn-wide">
+            Verify and log in
+          </button>
+        </form>
+
+        <p className="auth-bottom">
+          <button type="button" className="link" onClick={resetLogin}>
+            Use a different account
+          </button>
+        </p>
+      </AuthCard>
+    )
   }
 
   return (
     <AuthCard title="Log in" text="Welcome back. Pick up where you left off.">
       <form onSubmit={handleSubmit} noValidate>
         <div className="field">
-          <label className="label" htmlFor="login-email">
-            Email
+          <label className="label" htmlFor="login-identifier">
+            Username or email
           </label>
           <input
-            id="login-email"
-            type="email"
-            className={emailError ? 'input has-error' : 'input'}
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            autoComplete="email"
+            id="login-identifier"
+            type="text"
+            className={identifierError ? 'input has-error' : 'input'}
+            value={identifier}
+            onChange={(event) => setIdentifier(event.target.value)}
+            autoComplete="username"
           />
-          {emailError && <div className="error-text">{emailError}</div>}
+          {identifierError && <div className="error-text">{identifierError}</div>}
         </div>
 
         <div className="field">
@@ -73,6 +149,7 @@ function Login() {
               className={passwordError ? 'input has-error' : 'input'}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
             />
             <button
               type="button"

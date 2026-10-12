@@ -1,4 +1,4 @@
-const path = require('node:path')
+﻿const path = require('node:path')
 
 require('dotenv').config({
   path: path.join(__dirname, '.env'),
@@ -8,29 +8,38 @@ require('dotenv').config({
 const express = require('express')
 const cookieParser = require('cookie-parser')
 const connectDatabase = require('./config/db')
+
+const authRoutes = require('./routes/authRoutes')
+const profileRoutes = require('./routes/profileRoutes')
 const boardRoutes = require('./routes/boardRoutes')
 const taskRoutes = require('./routes/taskRoutes')
 const shareLinkRoutes = require('./routes/shareLinkRoutes')
 const dashboardRoutes = require('./routes/dashboardRoutes')
 const exportRoutes = require('./routes/exportRoutes')
+const userRoutes = require('./routes/userRoutes')
 
 const app = express()
 
-app.use(express.json())
+app.use(express.json({ limit: '2mb' }))
 app.use(cookieParser())
 
-// Routes
 app.get('/', (req, res) => {
   res.send('Server is running')
 })
 
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' })
+})
+
+app.use('/api/auth', authRoutes)
+app.use('/api/profile', profileRoutes)
 app.use('/api/boards', boardRoutes)
 app.use('/api/boards/:boardId/tasks', taskRoutes)
 app.use('/api/boards/:boardId/share-links', shareLinkRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/export', exportRoutes)
+app.use('/api/users', userRoutes)
 
-// Error handler — after all routes
 app.use((error, req, res, next) => {
   if (res.headersSent) {
     return next(error)

@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    firstLoginVerifiedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

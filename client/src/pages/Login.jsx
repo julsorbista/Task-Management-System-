@@ -50,6 +50,11 @@ function Login() {
     setIsSubmitting(true)
     try {
       const challenge = await login(trimmedIdentifier, password)
+      if (challenge.otpRequired === false) {
+        if (!(await getCurrentUser())) throw new Error('Login session could not be established. Please try again.')
+        await openFirstTaskPage()
+        return
+      }
       setOtpChallenge(challenge)
       setOtp('')
       setOtpError('')

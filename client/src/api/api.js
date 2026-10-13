@@ -15,14 +15,13 @@
 //
 // The pages only call these functions, so nothing else needs to change.
 
-import { mockUsers, mockPages, mockTasks, mockNotifications } from '../data/mockData.js'
-import { clearWorkspaceSnapshot } from '../utils/workspaceSnapshot.js'
+import { mockUsers, mockPages, mockTasks } from '../data/mockData.js'
+import { clearWorkspaceSnapshot, workspaceSnapshot, publishWorkspaceChange } from '../utils/workspaceSnapshot.js'
 
 // ---------- The fake database (kept in memory) ----------
 let users = makeCopy(mockUsers)
 let pages = makeCopy(mockPages)
 let tasks = makeCopy(mockTasks)
-let notifications = makeCopy(mockNotifications)
 
 // The logged-in user's id is saved in the browser so a refresh keeps you logged in
 let currentUserId = localStorage.getItem('morrow-user-id') || ''
@@ -32,11 +31,6 @@ let currentUserId = localStorage.getItem('morrow-user-id') || ''
 // Make a full copy, so pages can never change the "database" by accident
 function makeCopy(value) {
   return JSON.parse(JSON.stringify(value))
-}
-
-// Make a new unique id (the real database will do this itself)
-function makeId(prefix) {
-  return prefix + '-' + Date.now() + '-' + Math.floor(Math.random() * 1000)
 }
 
 async function apiRequest(path, options = {}) {
@@ -168,6 +162,9 @@ export async function updateProfile(changes) {
     throw new Error(data.message || 'Failed to update profile.')
   }
 
+  workspaceSnapshot.user = data
+  workspaceSnapshot.users = workspaceSnapshot.users.map((user) => user._id === data._id ? data : user)
+  publishWorkspaceChange()
   return data
 }
 
@@ -499,7 +496,11 @@ export async function setNotificationRead(notificationId, isRead) {
   })
 
   const data = await readApiJson(response, 'Failed to mark notification as read.')
-  return formatNotification(data.notification)
+  const updated = formatNotification(data.notification)
+  workspaceSnapshot.notifications = workspaceSnapshot.notifications.map((item) => item._id === updated._id ? updated : item)
+  workspaceSnapshot.unreadCount = workspaceSnapshot.notifications.filter((item) => !item.isRead).length
+  publishWorkspaceChange()
+  return updated
 }
 
 // Mark all of the user's notifications as read
@@ -514,7 +515,11 @@ export async function markAllNotificationsRead() {
     body: JSON.stringify({}),
   })
 
-  return readApiJson(response, 'Failed to mark notifications as read.')
+  const result = await readApiJson(response, 'Failed to mark notifications as read.')
+  workspaceSnapshot.notifications = workspaceSnapshot.notifications.map((item) => ({ ...item, isRead: true }))
+  workspaceSnapshot.unreadCount = 0
+  publishWorkspaceChange()
+  return result
 }
 
 // Remove every notification that is already read
@@ -529,6 +534,9 @@ export async function clearReadNotifications() {
     },
   })
 
-  return readApiJson(response, 'Failed to clear read notifications.')
+  const result = await readApiJson(response, 'Failed to clear read notifications.')
+  workspaceSnapshot.notifications = workspaceSnapshot.notifications.filter((item) => !item.isRead)
+  publishWorkspaceChange()
+  return result
 }
 

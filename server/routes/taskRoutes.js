@@ -40,7 +40,7 @@ router.post(
 router.patch(
   '/:taskId',
   requireWriteRequest,
-  canViewBoard,
+  canEditBoardTasks,
   updateTask,
 )
 

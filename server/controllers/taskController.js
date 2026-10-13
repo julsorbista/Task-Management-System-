@@ -230,9 +230,9 @@ async function updateTask(req, res, next) {
   }
 
   const body = req.body || {}
-  if (req.boardRole === 'viewer' && (
-    Object.keys(body).length !== 1 || !['todo', 'done'].includes(body.status)
-  )) return res.status(403).json({ message: 'Viewers can only check or uncheck tasks.' })
+  if (!['owner', 'editor'].includes(req.boardRole)) {
+    return res.status(403).json({ message: 'Viewers cannot change tasks or task completion.' })
+  }
   const changes = collectTaskChanges(body, res)
 
   if (!changes) return

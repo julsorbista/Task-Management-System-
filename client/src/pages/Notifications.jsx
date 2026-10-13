@@ -36,6 +36,12 @@ function Notifications() {
   const [isConfirmingClear, setIsConfirmingClear] = useState(false)
 
   useEffect(() => {
+    function syncNotifications() { setNotifications(workspaceSnapshot.notifications) }
+    window.addEventListener('morrow-notifications-changed', syncNotifications)
+    return () => window.removeEventListener('morrow-notifications-changed', syncNotifications)
+  }, [])
+
+  useEffect(() => {
     let active = true
     async function loadData() {
       try {

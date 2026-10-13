@@ -6,3 +6,8 @@ export function clearWorkspaceSnapshot() {
 export function publishWorkspaceChange() {
   window.dispatchEvent(new Event('morrow-workspace-changed'))
 }
+
+export function publishNotifications() {
+  workspaceSnapshot.unreadCount = workspaceSnapshot.notifications.filter((item) => !item.isRead).length
+  window.dispatchEvent(new Event('morrow-notifications-changed'))
+}

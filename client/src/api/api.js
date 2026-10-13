@@ -16,7 +16,7 @@
 // The pages only call these functions, so nothing else needs to change.
 
 import { mockUsers, mockPages, mockTasks } from '../data/mockData.js'
-import { clearWorkspaceSnapshot, workspaceSnapshot, publishWorkspaceChange } from '../utils/workspaceSnapshot.js'
+import { clearWorkspaceSnapshot, workspaceSnapshot, publishWorkspaceChange, publishNotifications } from '../utils/workspaceSnapshot.js'
 
 // ---------- The fake database (kept in memory) ----------
 let users = makeCopy(mockUsers)
@@ -470,13 +470,28 @@ export async function deleteTask(pageId, taskId) {
 // =====================================================
 
 // The logged-in user's notifications
+let notificationRevision = 0
+let notificationRequest = null
 export async function getNotifications() {
+  if (notificationRequest) return notificationRequest
+  const revision = notificationRevision
+  const userId = workspaceSnapshot.user?._id
+  notificationRequest = loadNotifications().finally(() => { notificationRequest = null })
+  return notificationRequest
+
+  async function loadNotifications() {
   const response = await fetch('/api/users/notifications', {
     credentials: 'include',
+    cache: 'no-store',
   })
 
   const data = await readApiJson(response, 'Failed to load notifications.')
-  return (data.notifications || []).map(formatNotification)
+  // A response started before a local write or account switch must not undo it.
+  if (revision !== notificationRevision || userId !== workspaceSnapshot.user?._id) return workspaceSnapshot.notifications
+  workspaceSnapshot.notifications = (data.notifications || []).map(formatNotification)
+  publishNotifications()
+  return workspaceSnapshot.notifications
+  }
 }
 
 // Mark one notification as read (true) or unread (false)
@@ -497,9 +512,11 @@ export async function setNotificationRead(notificationId, isRead) {
 
   const data = await readApiJson(response, 'Failed to mark notification as read.')
   const updated = formatNotification(data.notification)
+  notificationRevision++
   workspaceSnapshot.notifications = workspaceSnapshot.notifications.map((item) => item._id === updated._id ? updated : item)
   workspaceSnapshot.unreadCount = workspaceSnapshot.notifications.filter((item) => !item.isRead).length
   publishWorkspaceChange()
+  publishNotifications()
   return updated
 }
 
@@ -516,9 +533,11 @@ export async function markAllNotificationsRead() {
   })
 
   const result = await readApiJson(response, 'Failed to mark notifications as read.')
+  notificationRevision++
   workspaceSnapshot.notifications = workspaceSnapshot.notifications.map((item) => ({ ...item, isRead: true }))
   workspaceSnapshot.unreadCount = 0
   publishWorkspaceChange()
+  publishNotifications()
   return result
 }
 
@@ -535,8 +554,10 @@ export async function clearReadNotifications() {
   })
 
   const result = await readApiJson(response, 'Failed to clear read notifications.')
+  notificationRevision++
   workspaceSnapshot.notifications = workspaceSnapshot.notifications.filter((item) => !item.isRead)
   publishWorkspaceChange()
+  publishNotifications()
   return result
 }
 

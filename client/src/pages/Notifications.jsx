@@ -89,24 +89,31 @@ function Notifications() {
   }
 
   async function handleMarkAllRead() {
+    if (unreadCount === 0) return
     try {
-      await markAllNotificationsRead()
-      showToast('Notifications marked as read')
+      const result = await markAllNotificationsRead()
       setNotifications((items) => items.map((item) => ({ ...item, isRead: true })))
+      // Only say so when the server actually changed at least one notification
+      const changedCount = result.modifiedCount ?? unreadCount
+      if (changedCount > 0) showToast('Notifications marked as read')
     } catch (error) {
       showToast(error.message || 'Failed to mark notifications as read')
     }
   }
 
   async function handleClearRead() {
-    await clearReadNotifications()
+    const result = await clearReadNotifications()
     setIsConfirmingClear(false)
-    showToast('Read notifications cleared')
     setNotifications((items) => items.filter((item) => !item.isRead))
+    // Only say so when the server actually removed at least one notification
+    const removedCount = result.deletedCount ?? readCount
+    if (removedCount > 0) showToast('Read notifications cleared')
   }
 
   const visibleNotifications = notifications.filter((n) => filter === 'all' || !n.isRead)
+  // These counts decide which action buttons can be used
   const readCount = notifications.filter((n) => n.isRead).length
+  const unreadCount = notifications.length - readCount
 
   return (
     <Layout reloadSignal={notifications}>
@@ -128,13 +135,20 @@ function Notifications() {
 
           {/* Text actions at the top right */}
           <div className="notifications-actions">
-            <button type="button" className="link" onClick={handleMarkAllRead}>
+            <button
+              type="button"
+              className="link"
+              disabled={unreadCount === 0}
+              title={unreadCount === 0 ? 'No unread notifications' : undefined}
+              onClick={handleMarkAllRead}
+            >
               Mark all as read
             </button>
             <button
               type="button"
               className="link"
               disabled={readCount === 0}
+              title={readCount === 0 ? 'No read notifications' : undefined}
               onClick={() => setIsConfirmingClear(true)}
             >
               Clear read

@@ -2,7 +2,7 @@
 // The left sidebar: logo, close button, search, Dashboard tab,
 // Private and Shared pages, and the user's name with a log out button.
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Icon from './Icon.jsx'
 import MoreMenu from './MoreMenu.jsx'
@@ -26,6 +26,9 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
   // Renaming a page: the id of the page being renamed, or ''
   const [renamingPageId, setRenamingPageId] = useState('')
   const [renameText, setRenameText] = useState('')
+  const [pageError, setPageError] = useState('')
+  const [isSavingRename, setIsSavingRename] = useState(false)
+  const renameInFlight = useRef(false)
 
   // The page waiting for a delete confirmation, or null
   const [pageToDelete, setPageToDelete] = useState(null)
@@ -81,27 +84,39 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
 
   // ---------- Rename a page ----------
   function startRenaming(page) {
+    setPageError('')
     setRenamingPageId(page._id)
     setRenameText(page.name)
     setAddingType('')
   }
 
   async function saveRename() {
+    if (renameInFlight.current) return
     const name = renameText.trim()
     const pageId = renamingPageId
-    setRenamingPageId('')
     if (name === '' || pageId === '') return
-    await renamePage(pageId, name)
-    onDataChanged()
-    showToast('Page renamed')
+    renameInFlight.current = true
+    setIsSavingRename(true)
+    setPageError('')
+    try {
+      const updatedPage = await renamePage(pageId, name)
+      onDataChanged({ type: 'rename', page: updatedPage })
+      setRenamingPageId('')
+      showToast('Page renamed')
+    } catch (error) {
+      setPageError(error.message || 'Could not rename the page.')
+    } finally {
+      renameInFlight.current = false
+      setIsSavingRename(false)
+    }
   }
 
   // ---------- Delete a page ----------
   async function confirmDeletePage() {
     const deletedId = pageToDelete._id
-    setPageToDelete(null)
     await deletePage(deletedId)
-    onDataChanged()
+    onDataChanged({ type: 'delete', pageId: deletedId })
+    setPageToDelete(null)
     showToast('Page deleted')
 
     // If we were looking at the deleted page, go somewhere else
@@ -136,6 +151,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
               className="input sidebar-input"
               aria-label="Page name"
               autoFocus
+              disabled={isSavingRename}
               value={renameText}
               onChange={(event) => setRenameText(event.target.value)}
               onBlur={saveRename}
@@ -161,14 +177,14 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
             <span className="one-line">{page.name}</span>
             {openCount > 0 && <span className="sidebar-count">{openCount}</span>}
           </Link>
-          <MoreMenu
+          {page.owner === user._id && <MoreMenu
             label="Page options"
             buttonClass="sidebar-page-more"
             items={[
               { label: 'Rename', onClick: () => startRenaming(page) },
               { label: 'Delete', onClick: () => setPageToDelete(page), isDanger: true },
             ]}
-          />
+          />}
         </div>
       )
     })
@@ -248,6 +264,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
 
       {/* Dashboard tab */}
       <nav className="sidebar-navigation" aria-label="Workspace navigation">
+      {pageError && <p className="error-text" role="alert">{pageError}</p>}
       <div className="sidebar-dashboard">
         <Link
           to="/dashboard"

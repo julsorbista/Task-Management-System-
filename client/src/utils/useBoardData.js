@@ -16,13 +16,25 @@ export default function useBoardData(pageId, reloadCount) {
   const [state, setState] = useState(() => ({ pageId, data: cachedBoard(pageId), error: '' }))
   const data = state.pageId === pageId ? state.data : cachedBoard(pageId)
   useEffect(() => {
+    function handleBoardChanged(event) {
+      if (event.detail.boardId !== pageId) return
+      revisions.current[pageId] = (revisions.current[pageId] || 0) + 1
+      const updated = cachedBoard(pageId)
+      setState({ pageId, data: updated, error: updated ? '' : 'This board was deleted.' })
+    }
+    window.addEventListener('morrow-board-changed', handleBoardChanged)
+    return () => window.removeEventListener('morrow-board-changed', handleBoardChanged)
+  }, [pageId])
+  useEffect(() => {
     let active = true
     const revision = revisions.current[pageId] || 0
     Promise.all([getPage(pageId), getTasksByPage(pageId), getUsers(), getCurrentUser()])
       .then(([page, tasks, users, currentUser]) => {
         if (!active) return
         const latest = cachedBoard(pageId)
-        const fresh = { page, tasks: revision !== (revisions.current[pageId] || 0) && latest ? latest.tasks : tasks, users, currentUser }
+        const changed = revision !== (revisions.current[pageId] || 0) && latest
+        const fresh = { page: changed ? { ...page, name: latest.page.name } : page,
+          tasks: changed ? latest.tasks : tasks, users, currentUser }
         workspaceSnapshot.boards[pageId] = fresh
         workspaceSnapshot.users = users
         setState({ pageId, data: fresh, error: '' })

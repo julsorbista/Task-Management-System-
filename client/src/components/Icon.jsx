@@ -79,6 +79,12 @@ function Icon({ name }) {
       </>
     ),
     chart: <path d="M5 20V10M12 20V4M19 20v-7" />,
+    document: (
+      <>
+        <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" />
+        <path d="M14 3v6h6M8 14h8M8 18h8" />
+      </>
+    ),
     download: <path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14" />,
     logout: <path d="M9 4H5v16h4M15 8l4 4-4 4M19 12H9" />,
     left: <path d="m14 6-6 6 6 6" />,

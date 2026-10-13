@@ -121,6 +121,7 @@ function TaskList() {
 
   // The checkbox: switch between done and to do
   async function handleToggleDone(task) {
+    if (!canEditTasks) return
     if (savingTaskIds.includes(task._id)) return
     const newStatus = task.status === 'done' ? 'todo' : 'done'
     setSavingTaskIds((ids) => [...ids, task._id])
@@ -215,8 +216,8 @@ function TaskList() {
                   type="button"
                   className={isDone ? 'task-check checked' : 'task-check'}
                   aria-label={isDone ? 'Mark as not done' : 'Mark as done'}
-                  title="Update task completion"
-                  disabled={savingTaskIds.includes(task._id)}
+                  title={canEditTasks ? 'Update task completion' : 'Viewers cannot change task completion'}
+                  disabled={!canEditTasks || savingTaskIds.includes(task._id)}
                   aria-busy={savingTaskIds.includes(task._id)}
                   onClick={() => handleToggleDone(task)}
                 >

@@ -22,6 +22,8 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
   // Adding a page: '' (not adding), 'private' or 'shared'
   const [addingType, setAddingType] = useState('')
   const [newPageName, setNewPageName] = useState('')
+  const [isSavingPage, setIsSavingPage] = useState(false)
+  const createInFlight = useRef(false)
 
   // Renaming a page: the id of the page being renamed, or ''
   const [renamingPageId, setRenamingPageId] = useState('')
@@ -66,20 +68,32 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
 
   // ---------- Add a page ----------
   function startAdding(type) {
+    setPageError('')
     setAddingType(type)
     setNewPageName('')
     setRenamingPageId('')
   }
 
   async function saveNewPage() {
+    if (createInFlight.current) return
     const name = newPageName.trim()
     const type = addingType
-    setAddingType('')
-    if (name === '' || type === '') return // nothing typed: just close the input
-    const newPage = await createPage(name, type)
-    onDataChanged()
-    showToast('Page added')
-    navigate('/pages/' + newPage._id + '/list')
+    if (name === '' || type === '') { setAddingType(''); return }
+    createInFlight.current = true
+    setIsSavingPage(true)
+    setPageError('')
+    try {
+      const newPage = await createPage(name, type)
+      onDataChanged({ type: 'create', page: newPage })
+      setAddingType('')
+      showToast('Page added')
+      navigate('/pages/' + newPage._id + '/list')
+    } catch (error) {
+      setPageError(error.message || 'Could not add the page.')
+    } finally {
+      createInFlight.current = false
+      setIsSavingPage(false)
+    }
   }
 
   // ---------- Rename a page ----------
@@ -174,6 +188,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
             className={isActive ? 'sidebar-link active' : 'sidebar-link'}
             onClick={onNavigate}
           >
+            <Icon name="document" />
             <span className="one-line">{page.name}</span>
             {openCount > 0 && <span className="sidebar-count">{openCount}</span>}
           </Link>
@@ -198,6 +213,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
           type="text"
           className="input sidebar-input"
           aria-label="New page name"
+          disabled={isSavingPage}
           placeholder="Page name"
           autoFocus
           value={newPageName}

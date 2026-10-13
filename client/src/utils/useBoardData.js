@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getPage, getTasksByPage, getUsers, getCurrentUser } from '../api/api.js'
-import { workspaceSnapshot } from './workspaceSnapshot.js'
+import { workspaceSnapshot, publishWorkspaceChange } from './workspaceSnapshot.js'
 
 function cachedBoard(pageId) {
   if (workspaceSnapshot.boards[pageId]) return workspaceSnapshot.boards[pageId]
@@ -49,15 +49,14 @@ export default function useBoardData(pageId, reloadCount) {
 
   function setTasks(update) {
     revisions.current[pageId] = (revisions.current[pageId] || 0) + 1
-    setState((previous) => {
-      const current = previous.pageId === pageId ? previous.data : cachedBoard(pageId)
-      if (!current) return previous
-      const tasks = typeof update === 'function' ? update(current.tasks) : update
-      const next = { ...current, tasks }
-      workspaceSnapshot.boards[pageId] = next
-      workspaceSnapshot.tasks = [...workspaceSnapshot.tasks.filter((item) => item.page !== pageId), ...tasks]
-      return { pageId, data: next, error: '' }
-    })
+    const current = cachedBoard(pageId) || data
+    if (!current) return
+    const tasks = typeof update === 'function' ? update(current.tasks) : update
+    const next = { ...current, tasks }
+    workspaceSnapshot.boards[pageId] = next
+    workspaceSnapshot.tasks = [...workspaceSnapshot.tasks.filter((item) => item.page !== pageId), ...tasks]
+    setState({ pageId, data: next, error: '' })
+    publishWorkspaceChange()
   }
 
   return { page: data?.page || null, tasks: data?.tasks || [], users: data?.users || [],

@@ -11,7 +11,7 @@
 // Pages pass their own data here so the sidebar counts and the bell badge
 // stay up to date after a change.
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar.jsx'
 import Icon from './Icon.jsx'
@@ -39,11 +39,28 @@ function Layout({ children, reloadSignal }) {
 
   // Goes up by one each time the sidebar changes something, to load the data again
   const [reloadCount, setReloadCount] = useState(0)
+  const boardWriteRevision = useRef(0)
+
+  useEffect(() => {
+    function syncWorkspace() {
+      boardWriteRevision.current++
+      setUser(workspaceSnapshot.user)
+      setPages(workspaceSnapshot.pages)
+      setTasks(workspaceSnapshot.tasks)
+      setUnreadCount(workspaceSnapshot.unreadCount)
+    }
+    window.addEventListener('morrow-workspace-changed', syncWorkspace)
+    return () => window.removeEventListener('morrow-workspace-changed', syncWorkspace)
+  }, [])
+
+  // Array changes are already published through the workspace snapshot.
+  const refreshSignal = typeof reloadSignal === 'number' ? reloadSignal : 0
 
   // Load the data when the screen opens, when the URL changes,
   // and whenever a page or the sidebar says something changed
   useEffect(() => {
     let active = true
+    const revision = boardWriteRevision.current
     async function loadData() {
       try {
       const currentUser = await getCurrentUser()
@@ -57,7 +74,7 @@ function Layout({ children, reloadSignal }) {
       workspaceSnapshot.user = currentUser
       const [allNotifications, allPages, allUsers] = await Promise.all([getNotifications(), getPages(), getUsers()])
       const allTasks = await getTasks(allPages)
-      if (!active) return
+      if (!active || revision !== boardWriteRevision.current) return
       const count = allNotifications.filter((n) => !n.isRead).length
       Object.assign(workspaceSnapshot, { user: currentUser, pages: allPages, tasks: allTasks, notifications: allNotifications, unreadCount: count, users: allUsers, loaded: true })
       for (const id of Object.keys(workspaceSnapshot.boards)) {
@@ -73,11 +90,16 @@ function Layout({ children, reloadSignal }) {
     }
     loadData()
     return () => { active = false }
-  }, [location.pathname, reloadSignal, reloadCount, navigate])
+  }, [location.pathname, refreshSignal, reloadCount, navigate])
 
   // Reflect successful sidebar writes immediately, then refresh in the background.
   function handleSidebarChanged(change) {
-    if (change?.type === 'rename') {
+    if (change) boardWriteRevision.current++
+    if (change?.type === 'create') {
+      const page = { ...change.page, members: change.page.members || [{ user: user._id, role: 'owner' }] }
+      workspaceSnapshot.pages = [page, ...workspaceSnapshot.pages.filter((item) => item._id !== page._id)]
+      workspaceSnapshot.boards[page._id] = { page, tasks: [], users: workspaceSnapshot.users, currentUser: user }
+    } else if (change?.type === 'rename') {
       workspaceSnapshot.pages = workspaceSnapshot.pages.map((page) => page._id === change.page._id ? { ...page, ...change.page } : page)
       const cached = workspaceSnapshot.boards[change.page._id]
       if (cached) cached.page = { ...cached.page, ...change.page }

@@ -16,6 +16,7 @@
 // The pages only call these functions, so nothing else needs to change.
 
 import { mockUsers, mockPages, mockTasks, mockNotifications } from '../data/mockData.js'
+import { clearWorkspaceSnapshot } from '../utils/workspaceSnapshot.js'
 
 // ---------- The fake database (kept in memory) ----------
 let users = makeCopy(mockUsers)
@@ -68,6 +69,7 @@ export async function login(identifier, password) {
 
 // Finish login after the OTP has been entered.
 export async function verifyLoginOtp(challengeId, otp) {
+  clearWorkspaceSnapshot()
   const data = await apiRequest('/api/auth/login/verify-otp', {
     method: 'POST',
     body: JSON.stringify({ challengeId, otp }),
@@ -91,6 +93,8 @@ export async function register(name, username, email, password) {
 
 // Log out
 export async function logout() {
+  await apiRequest('/api/auth/logout', { method: 'POST', body: '{}' })
+  clearWorkspaceSnapshot()
   currentUserId = ''
   localStorage.removeItem('morrow-user-id')
 }
@@ -382,8 +386,8 @@ async function readApiJson(response, fallbackMessage) {
 }
 
 // Every task on the pages the logged-in user can see
-export async function getTasks() {
-  const boards = await getPages()
+export async function getTasks(loadedBoards) {
+  const boards = loadedBoards || await getPages()
   const lists = await Promise.all(boards.map((board) => getTasksByPage(board._id)))
   return lists.flat()
 }

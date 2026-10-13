@@ -17,16 +17,18 @@ import Sidebar from './Sidebar.jsx'
 import Icon from './Icon.jsx'
 import { getCurrentUser, getPages, getTasks, getNotifications } from '../api/api.js'
 import './Layout.css'
+import { workspaceSnapshot, clearWorkspaceSnapshot } from '../utils/workspaceSnapshot.js'
 
 function Layout({ children, reloadSignal }) {
   const navigate = useNavigate()
   const location = useLocation()
 
   // Data shown in the sidebar and top bar
-  const [user, setUser] = useState(null)
-  const [pages, setPages] = useState([])
-  const [tasks, setTasks] = useState([])
-  const [unreadCount, setUnreadCount] = useState(0)
+  const [user, setUser] = useState(workspaceSnapshot.user)
+  const [pages, setPages] = useState(workspaceSnapshot.pages)
+  const [tasks, setTasks] = useState(workspaceSnapshot.tasks)
+  const [unreadCount, setUnreadCount] = useState(workspaceSnapshot.unreadCount)
+  const [loadError, setLoadError] = useState('')
 
   // The sidebar starts open on a computer and closed on a phone
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 760)
@@ -40,19 +42,32 @@ function Layout({ children, reloadSignal }) {
   // Load the data when the screen opens, when the URL changes,
   // and whenever a page or the sidebar says something changed
   useEffect(() => {
+    let active = true
     async function loadData() {
+      try {
       const currentUser = await getCurrentUser()
+      if (!active) return
       if (!currentUser) {
-        navigate('/login') // nobody is logged in
+        clearWorkspaceSnapshot()
+        navigate('/login', { replace: true })
         return
       }
-      const allNotifications = await getNotifications()
       setUser(currentUser)
-      setPages(await getPages())
-      setTasks(await getTasks())
-      setUnreadCount(allNotifications.filter((n) => !n.isRead).length)
+      const [allNotifications, allPages] = await Promise.all([getNotifications(), getPages()])
+      const allTasks = await getTasks(allPages)
+      if (!active) return
+      const count = allNotifications.filter((n) => !n.isRead).length
+      Object.assign(workspaceSnapshot, { user: currentUser, pages: allPages, tasks: allTasks, unreadCount: count })
+      setPages(allPages)
+      setTasks(allTasks)
+      setUnreadCount(count)
+      setLoadError('')
+      } catch (error) {
+        if (active) setLoadError(error.message || 'Failed to load workspace.')
+      }
     }
     loadData()
+    return () => { active = false }
   }, [location.pathname, reloadSignal, reloadCount, navigate])
 
   // Switch between light and dark and remember the choice
@@ -71,7 +86,7 @@ function Layout({ children, reloadSignal }) {
   const isOnNotifications = location.pathname === '/notifications'
 
   // Wait for the user before drawing anything
-  if (!user) return null
+  if (!user) return <div className="content"><p role={loadError ? 'alert' : 'status'}>{loadError || 'Loading workspace…'}</p></div>
 
   return (
     <div className="layout">
@@ -127,7 +142,7 @@ function Layout({ children, reloadSignal }) {
           </div>
         </header>
 
-        <main className="content">{children}</main>
+        <main className="content">{loadError && <p role="alert" className="error-text">{loadError}</p>}{children}</main>
       </div>
     </div>
   )

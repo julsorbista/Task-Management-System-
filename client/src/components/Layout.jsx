@@ -75,6 +75,25 @@ function Layout({ children, reloadSignal }) {
     return () => { active = false }
   }, [location.pathname, reloadSignal, reloadCount, navigate])
 
+  // Reflect successful sidebar writes immediately, then refresh in the background.
+  function handleSidebarChanged(change) {
+    if (change?.type === 'rename') {
+      workspaceSnapshot.pages = workspaceSnapshot.pages.map((page) => page._id === change.page._id ? { ...page, ...change.page } : page)
+      const cached = workspaceSnapshot.boards[change.page._id]
+      if (cached) cached.page = { ...cached.page, ...change.page }
+    } else if (change?.type === 'delete') {
+      workspaceSnapshot.pages = workspaceSnapshot.pages.filter((page) => page._id !== change.pageId)
+      workspaceSnapshot.tasks = workspaceSnapshot.tasks.filter((task) => task.page !== change.pageId)
+      delete workspaceSnapshot.boards[change.pageId]
+    }
+    if (change) {
+      setPages(workspaceSnapshot.pages)
+      setTasks(workspaceSnapshot.tasks)
+      window.dispatchEvent(new CustomEvent('morrow-board-changed', { detail: { boardId: change.page?._id || change.pageId } }))
+    }
+    setReloadCount((count) => count + 1)
+  }
+
   // Switch between light and dark and remember the choice
   function toggleTheme() {
     const newTheme = theme === 'light' ? 'dark' : 'light'
@@ -107,7 +126,7 @@ function Layout({ children, reloadSignal }) {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         onNavigate={closeSidebarOnPhone}
-        onDataChanged={() => setReloadCount(reloadCount + 1)}
+        onDataChanged={handleSidebarChanged}
       />
 
       {/* On a phone: dark layer behind the open sidebar. Clicking it closes the sidebar. */}

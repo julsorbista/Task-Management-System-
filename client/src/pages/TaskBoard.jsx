@@ -41,6 +41,7 @@ function TaskBoard() {
   const [users, setUsers] = useState([])
   const [currentUser, setCurrentUser] = useState(null)
   const [hasLoaded, setHasLoaded] = useState(false)
+  const [loadError, setLoadError] = useState('')
   const [reloadCount, setReloadCount] = useState(0)
 
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
@@ -56,14 +57,27 @@ function TaskBoard() {
   const [isShareOpen, setIsShareOpen] = useState(false)
 
   useEffect(() => {
+    let active = true
+    setHasLoaded(false)
+    setLoadError('')
     async function loadData() {
-      setPage(await getPage(pageId))
-      setTasks(await getTasksByPage(pageId))
-      setUsers(await getUsers())
-      setCurrentUser(await getCurrentUser())
-      setHasLoaded(true)
+      try {
+        const [board, boardTasks, allUsers, user] = await Promise.all([
+          getPage(pageId), getTasksByPage(pageId), getUsers(), getCurrentUser(),
+        ])
+        if (!active) return
+        setPage(board)
+        setTasks(boardTasks)
+        setUsers(allUsers)
+        setCurrentUser(user)
+      } catch (error) {
+        if (active) setLoadError(error.message || 'Failed to load tasks.')
+      } finally {
+        if (active) setHasLoaded(true)
+      }
     }
     loadData()
+    return () => { active = false }
   }, [pageId, reloadCount])
 
   function reloadData() {
@@ -111,7 +125,8 @@ function TaskBoard() {
     reloadData()
   }
 
-  if (!hasLoaded) return <Layout>{null}</Layout>
+  if (!hasLoaded) return <Layout><p role="status">Loading tasks…</p></Layout>
+  if (loadError) return <Layout><p role="alert" className="error-text">{loadError}</p></Layout>
 
   if (!page) {
     return (

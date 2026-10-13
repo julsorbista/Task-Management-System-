@@ -33,6 +33,15 @@
   --toast-check: #8cc39c;
 }
 
+/* Error messages use the app's soft red instead (it has its own dark theme colors) */
+.toast.toast-error,
+:root[data-theme='dark'] .toast.toast-error {
+  --toast-bg: var(--over-bg);
+  --toast-line: var(--over-bg);
+  --toast-text: var(--over);
+  --toast-check: var(--over);
+}
+
 .toast {
   display: flex;
   align-items: center;

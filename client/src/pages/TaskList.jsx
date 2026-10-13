@@ -25,6 +25,8 @@ import {
   formatDue,
   isOverdue,
   getInitials,
+  getId,
+  isAssignedToMe,
   makeEmptyTask,
 } from '../utils/helpers.js'
 import './TaskList.css'
@@ -119,9 +121,21 @@ function TaskList() {
     closeForm()
   }
 
+  // On shared pages, only the assignee can tick a task that is assigned to someone
+  function isAssignedToSomeoneElse(task) {
+    return page.type === 'shared' && getId(task.assignee) !== '' && !isAssignedToMe(task, currentUser)
+  }
+
+  // Who can tick the checkbox on a shared page: anyone (Viewers included) when the
+  // task is unassigned or assigned to them. Private pages follow the normal edit permission.
+  function canTickTask(task) {
+    if (page.type !== 'shared') return canEditTasks
+    return getId(task.assignee) === '' || isAssignedToMe(task, currentUser)
+  }
+
   // The checkbox: switch between done and to do
   async function handleToggleDone(task) {
-    if (!canEditTasks) return
+    if (!canTickTask(task)) return
     if (savingTaskIds.includes(task._id)) return
     const newStatus = task.status === 'done' ? 'todo' : 'done'
     setSavingTaskIds((ids) => [...ids, task._id])
@@ -208,16 +222,22 @@ function TaskList() {
           {/* One row per task */}
           {visibleTasks.map((task) => {
             const isDone = task.status === 'done'
-            const assignee = users.find((user) => user._id === task.assignee)
+            const assignee = users.find((user) => user._id === getId(task.assignee))
+            const isLocked = isAssignedToSomeoneElse(task)
+            const canTick = canTickTask(task)
+            let checkTitle = canTick ? 'Update task completion' : 'Viewers cannot change task completion'
+            if (isLocked) checkTitle = 'Only ' + (assignee ? assignee.name : 'the assignee') + ' can complete this task.'
+            let checkClass = isDone ? 'task-check checked' : 'task-check'
+            if (isLocked) checkClass += ' locked'
 
             return (
               <div className={rowClass} key={task._id}>
                 <button
                   type="button"
-                  className={isDone ? 'task-check checked' : 'task-check'}
+                  className={checkClass}
                   aria-label={isDone ? 'Mark as not done' : 'Mark as done'}
-                  title={canEditTasks ? 'Update task completion' : 'Viewers cannot change task completion'}
-                  disabled={!canEditTasks || savingTaskIds.includes(task._id)}
+                  title={checkTitle}
+                  disabled={!canTick || savingTaskIds.includes(task._id)}
                   aria-busy={savingTaskIds.includes(task._id)}
                   onClick={() => handleToggleDone(task)}
                 >

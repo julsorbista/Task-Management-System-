@@ -70,13 +70,53 @@
   font-weight: 600;
 }
 
-.otp-input {
-  text-align: center;
+/* A second link line right under another one (OTP screen) */
+.auth-bottom-tight {
+  margin-top: 8px;
+}
+
+/* Same space above the button as on the Log in screen
+   (16px field gap + the "Forgot password?" line there) */
+.otp-field {
+  margin-bottom: 42px;
+}
+
+/* The 6 OTP boxes: 6 equal columns across the full form width,
+   so the row lines up with the label and the Verify button */
+.otp-boxes {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+
+.otp-box {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  aspect-ratio: 1; /* square */
+  padding: 0;
+  text-align: center; /* the digit sits in the middle */
+  font-size: 18px;
   font-weight: 600;
+}
+
+/* The box you are typing in */
+.otp-box:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* Wrong code: every box gets a red border */
+.otp-box.has-error {
+  border-color: var(--over);
 }
 
 @media (max-width: 480px) {
   .auth-card {
     padding: 28px 20px;
+  }
+
+  .otp-boxes {
+    gap: 10px;
   }
 }

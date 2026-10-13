@@ -14,6 +14,22 @@
   z-index: 35;
   /* Short slide animation when it opens and closes */
   transition: margin-left 0.22s ease;
+
+  /* One shared icon column on the right: the toggle, the plus buttons,
+     the page "..." buttons and log out all use this size and right inset */
+  --sidebar-btn: 28px;
+  --sidebar-right: 4px;
+}
+
+/* Every right-side icon button in the sidebar: same size, icon centered */
+.sidebar .sidebar-btn {
+  width: var(--sidebar-btn);
+  height: var(--sidebar-btn);
+}
+
+.sidebar .sidebar-btn .icon {
+  width: 16px;
+  height: 16px;
 }
 
 .sidebar-navigation {
@@ -21,6 +37,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  margin-bottom: 20px; /* space above the user row */
 }
 
 .sidebar-top,
@@ -43,6 +60,7 @@
   display: flex;
   align-items: center;
   padding-left: 10px;
+  padding-right: var(--sidebar-right);
 }
 
 .sidebar-logo {
@@ -113,6 +131,34 @@
   font-weight: 500;
 }
 
+/* Small gray "Pages" / "Tasks" label above each group of results */
+.sidebar-results-heading {
+  padding: 10px 14px 4px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+/* A page result: page icon, then the name and Private / Shared */
+.sidebar-result-page {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.sidebar-result-page > .icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--muted);
+}
+
+.sidebar-result-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 /* ---------- Links ---------- */
 .sidebar-dashboard {
   margin-top: 12px;
@@ -131,7 +177,8 @@
   text-decoration: none;
 }
 
-.sidebar-link:hover {
+.sidebar-link:hover,
+.sidebar-page:hover > .sidebar-link {
   background: var(--faint);
 }
 
@@ -147,7 +194,8 @@
 }
 
 /* The page you are on */
-.sidebar-link.active {
+.sidebar-link.active,
+.sidebar-page:hover > .sidebar-link.active {
   background: var(--tint);
   color: var(--accent);
   font-weight: 600;
@@ -176,7 +224,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 0 10px;
+  padding: 0 var(--sidebar-right) 0 10px;
   margin-bottom: 6px;
   font-size: 12px;
   letter-spacing: 0.02em;
@@ -196,33 +244,32 @@
 /* The small plus button beside the section label */
 .sidebar-add {
   margin-left: auto;
-  width: 26px;
-  height: 26px;
-}
-
-.sidebar-add .icon {
-  width: 16px;
-  height: 16px;
 }
 
 /* One page: the link and its three-dot button */
-.sidebar-page {
+.sidebar-page,
+.sidebar-user {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 2px;
 }
 
+/* The link covers the whole row; its right padding leaves room for the
+   icon button, so counts line up and the button sits in the same spot */
 .sidebar-page > .sidebar-link {
-  padding-right: 42px;
+  padding-right: calc(var(--sidebar-right) + var(--sidebar-btn) + 6px);
+}
+
+/* The "..." button sits inside the row, on the shared right edge */
+.sidebar-page-more {
+  position: absolute;
+  top: 50%;
+  right: var(--sidebar-right);
+  transform: translateY(-50%);
 }
 
 /* The three-dot button only shows when the mouse is over the page */
 .sidebar-page-more {
-  position: absolute;
-  right: 6px;
-  width: 28px;
-  height: 28px;
   opacity: 0;
 }
 
@@ -243,16 +290,32 @@
 }
 
 /* ---------- User row at the bottom ---------- */
+/* One flex row: avatar, name and log out, all centered on the same line.
+   The log out button is a normal item at the end, on the shared right edge. */
 .sidebar-user {
-  display: flex;
-  align-items: center;
-  gap: 2px;
   margin-top: auto; /* pushes this row to the bottom */
-  padding-top: 20px;
+  gap: 6px;
+  padding-right: var(--sidebar-right);
+  border-radius: 6px;
 }
 
 .sidebar-user .sidebar-link {
   min-height: 44px;
+}
+
+/* The highlight is drawn on the whole row, so it covers the log out button too */
+.sidebar-user > .sidebar-link,
+.sidebar-user > .sidebar-link:hover,
+.sidebar-user > .sidebar-link.active {
+  background: none;
+}
+
+.sidebar-user:hover {
+  background: var(--faint);
+}
+
+.sidebar-user:has(> .sidebar-link.active) {
+  background: var(--tint);
 }
 
 /* ---------- Phones: the sidebar slides in on top of the page ---------- */
@@ -269,6 +332,7 @@
     overflow: visible;
     visibility: visible;
     transition: left 0.22s ease;
+    --sidebar-btn: 36px;
   }
 
   .sidebar.closed {

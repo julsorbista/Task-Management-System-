@@ -82,7 +82,7 @@ function Icon({ name }) {
     document: (
       <>
         <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" />
-        <path d="M14 3v6h6M8 14h8M8 18h8" />
+        <path d="M14 3v6h6" />
       </>
     ),
     download: <path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14" />,

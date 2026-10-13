@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard.jsx'
 import Icon from '../components/Icon.jsx'
@@ -6,8 +6,14 @@ import { login, verifyLoginOtp, getPages, getCurrentUser, getTasks, getUsers, ge
 import { workspaceSnapshot } from '../utils/workspaceSnapshot.js'
 import { isValidEmail, isValidPassword, isValidUsername } from '../utils/helpers.js'
 
+// The OTP has 6 digits; each box holds one of them
+const OTP_LENGTH = 6
+const EMPTY_DIGITS = ['', '', '', '', '', '']
+
 function Login() {
   const navigate = useNavigate()
+  // Messages passed to this screen (for example "Your account has been deleted")
+  // are shown by NavigationToast in App.jsx
 
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -15,7 +21,11 @@ function Login() {
   // Error messages shown under the fields
   const [identifierError, setIdentifierError] = useState('')
   const [passwordError, setPasswordError] = useState('')
-  const [otp, setOtp] = useState('')
+  const [digits, setDigits] = useState(EMPTY_DIGITS)
+  const otp = digits.join('')
+  const isOtpComplete = /^\d{6}$/.test(otp)
+  // The 6 box elements, so we can move the cursor between them
+  const boxRefs = useRef([])
   const [otpError, setOtpError] = useState('')
   const [otpChallenge, setOtpChallenge] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
@@ -41,7 +51,7 @@ function Login() {
         return
       }
       setOtpChallenge(challenge)
-      setOtp('')
+      setDigits(EMPTY_DIGITS)
       setResendSeconds(60)
       setOtpMessage('A new code was sent. Use the latest email; the old code no longer works.')
     } catch (error) {
@@ -51,21 +61,30 @@ function Login() {
     }
   }
 
+  // "Maya Reyes" -> { toast: 'Welcome back, Maya!' }, passed along with the page change
+  function welcomeMessage(user) {
+    const firstName = (user?.name || '').trim().split(' ')[0]
+    return { toast: firstName ? 'Welcome back, ' + firstName + '!' : 'Welcome back!' }
+  }
+
+  // Runs after EVERY successful log in (with or without OTP).
+  // Opens the first page and passes the welcome message along with it.
   async function openFirstTaskPage() {
     const invitationReturn = sessionStorage.getItem('morrow-invitation-return')
     if (invitationReturn && /^\/invitations\?(?:token=[a-f0-9]{64}|id=[a-f0-9]{24})(?:&action=(?:accept|decline))?$/.test(invitationReturn)) {
       sessionStorage.removeItem('morrow-invitation-return')
-      navigate(invitationReturn)
+      navigate(invitationReturn, { state: welcomeMessage(await getCurrentUser()) })
       return
     }
     const [pages, user, users, notifications] = await Promise.all([
       getPages(), getCurrentUser(), getUsers(), getNotifications(),
     ])
+    const welcome = welcomeMessage(user)
     const tasks = await getTasks(pages)
     Object.assign(workspaceSnapshot, { pages, user, users, notifications, tasks,
       unreadCount: notifications.filter((item) => !item.isRead).length, loaded: true })
-    if (pages.length > 0) navigate('/pages/' + pages[0]._id + '/list')
-    else navigate('/dashboard')
+    if (pages.length > 0) navigate('/pages/' + pages[0]._id + '/list', { state: welcome })
+    else navigate('/dashboard', { state: welcome })
   }
 
   async function handleSubmit(event) {
@@ -100,7 +119,7 @@ function Login() {
       setOtpChallenge(challenge)
       setResendSeconds(60)
       setOtpMessage('')
-      setOtp('')
+      setDigits(EMPTY_DIGITS)
       setOtpError('')
     } catch (error) {
       setPasswordError(error.message)
@@ -127,15 +146,82 @@ function Login() {
       }
       await openFirstTaskPage()
     } catch (error) {
+      // Wrong code: show the error, empty the boxes and start again at the first one
       setOtpError(error.message)
+      setDigits(EMPTY_DIGITS)
+      focusBox(0)
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  // ---------- The 6 OTP boxes ----------
+  function focusBox(index) {
+    const box = boxRefs.current[index]
+    if (box) box.focus()
+  }
+
+  // Put digits into the boxes, starting at box "start"
+  function fillBoxes(start, text) {
+    const newDigits = [...digits]
+    let index = start
+    for (const digit of text) {
+      if (index >= OTP_LENGTH) break
+      newDigits[index] = digit
+      index = index + 1
+    }
+    setDigits(newDigits)
+    focusBox(Math.min(index, OTP_LENGTH - 1))
+  }
+
+  function handleBoxChange(index, value) {
+    const typed = value.replace(/\D/g, '') // numbers only
+    if (typed === '') return
+    // More than one digit at once (for example the phone filling in the code)
+    if (typed.length >= OTP_LENGTH) {
+      fillBoxes(0, typed)
+      return
+    }
+    // Keep the newest digit, then move to the next box
+    const newDigits = [...digits]
+    newDigits[index] = typed[typed.length - 1]
+    setDigits(newDigits)
+    if (index < OTP_LENGTH - 1) focusBox(index + 1)
+  }
+
+  function handleBoxKeyDown(index, event) {
+    if (event.key === 'Backspace') {
+      event.preventDefault()
+      const newDigits = [...digits]
+      if (digits[index] !== '') {
+        // Clear this box
+        newDigits[index] = ''
+      } else if (index > 0) {
+        // Already empty: go back and clear the previous box
+        newDigits[index - 1] = ''
+        focusBox(index - 1)
+      }
+      setDigits(newDigits)
+    } else if (event.key === 'ArrowLeft' && index > 0) {
+      event.preventDefault()
+      focusBox(index - 1)
+    } else if (event.key === 'ArrowRight' && index < OTP_LENGTH - 1) {
+      event.preventDefault()
+      focusBox(index + 1)
+    }
+  }
+
+  function handleBoxPaste(index, event) {
+    event.preventDefault()
+    const pasted = event.clipboardData.getData('text').replace(/\D/g, '')
+    if (pasted === '') return
+    // A full 6-digit code fills every box; a shorter one fills from this box on
+    fillBoxes(pasted.length >= OTP_LENGTH ? 0 : index, pasted)
+  }
+
   function resetLogin() {
     setOtpChallenge(null)
-    setOtp('')
+    setDigits(EMPTY_DIGITS)
     setOtpError('')
   }
 
@@ -143,21 +229,32 @@ function Login() {
     return (
       <AuthCard title="Enter OTP" text={'We sent a 6-digit code to ' + otpChallenge.destination + '.'}>
         <form onSubmit={handleOtpSubmit} noValidate>
-          <div className="field">
-            <label className="label" htmlFor="login-otp">
+          <div className="field otp-field">
+            <div className="label" id="login-otp-label">
               OTP code
-            </label>
-            <input
-              id="login-otp"
-              type="text"
-              inputMode="numeric"
-              maxLength="6"
-              className={otpError ? 'input otp-input has-error' : 'input otp-input'}
-              value={otp}
-              onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
-              autoComplete="one-time-code"
-              autoFocus
-            />
+            </div>
+            {/* One box per digit */}
+            <div className="otp-boxes" role="group" aria-labelledby="login-otp-label">
+              {digits.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(element) => { boxRefs.current[index] = element }}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  aria-label={'Digit ' + (index + 1) + ' of 6'}
+                  aria-invalid={otpError ? 'true' : undefined}
+                  className={otpError ? 'input otp-box has-error' : 'input otp-box'}
+                  value={digit}
+                  onChange={(event) => handleBoxChange(index, event.target.value)}
+                  onKeyDown={(event) => handleBoxKeyDown(index, event)}
+                  onPaste={(event) => handleBoxPaste(index, event)}
+                  onFocus={(event) => event.target.select()}
+                  autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                  autoFocus={index === 0}
+                />
+              ))}
+            </div>
             {otpError && <div className="error-text">{otpError}</div>}
           </div>
 
@@ -167,7 +264,7 @@ function Login() {
             </div>
           )}
 
-          <button type="submit" className="btn btn-primary btn-wide" disabled={isSubmitting}>
+          <button type="submit" className="btn btn-primary btn-wide" disabled={isSubmitting || !isOtpComplete}>
             {isSubmitting ? 'Verifying…' : 'Verify and log in'}
           </button>
         </form>
@@ -177,8 +274,8 @@ function Login() {
             {isResending ? 'Sending…' : resendSeconds > 0 ? `Resend OTP in ${resendSeconds}s` : 'Resend OTP'}
           </button>
         </p>
-        {otpMessage && <p role="status" className="auth-bottom">{otpMessage}</p>}
-        <p className="auth-bottom">
+        {otpMessage && <p role="status" className="auth-bottom auth-bottom-tight">{otpMessage}</p>}
+        <p className="auth-bottom auth-bottom-tight">
           <button type="button" className="link" onClick={resetLogin} disabled={isSubmitting}>
             Use a different account
           </button>

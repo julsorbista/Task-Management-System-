@@ -37,10 +37,13 @@ router.post(
   createTask,
 )
 
+// Viewers may reach this route too, but updateTask only lets them change
+// the status of tasks that are unassigned or assigned to them (the checkbox).
+// Owners and editors can still change any field.
 router.patch(
   '/:taskId',
   requireWriteRequest,
-  canEditBoardTasks,
+  canViewBoard,
   updateTask,
 )
 

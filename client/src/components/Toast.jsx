@@ -14,7 +14,7 @@ import { connectToastList } from '../utils/toast.js'
 import './Toast.css'
 
 // One message
-function Toast({ text, onClose }) {
+function Toast({ text, type, onClose }) {
   // Close after 3 seconds
   useEffect(() => {
     const timer = setTimeout(onClose, 3000)
@@ -24,9 +24,9 @@ function Toast({ text, onClose }) {
   }, [])
 
   return (
-    <div className="toast" role="status">
+    <div className={type === 'error' ? 'toast toast-error' : 'toast'} role={type === 'error' ? 'alert' : 'status'}>
       <span className="toast-check">
-        <Icon name="check" />
+        <Icon name={type === 'error' ? 'close' : 'check'} />
       </span>
       <span className="toast-text">{text}</span>
       <button type="button" className="toast-close" aria-label="Close message" onClick={onClose}>
@@ -38,14 +38,14 @@ function Toast({ text, onClose }) {
 
 // All messages on screen, newest at the bottom of the stack
 function ToastList() {
-  // Each toast looks like { id: 1, text: 'Task added' }
+  // Each toast looks like { id: 1, text: 'Task added', type: 'success' }
   const [toasts, setToasts] = useState([])
 
   // Let showToast() add messages to this list
   useEffect(() => {
     let nextId = 1
-    connectToastList((text) => {
-      const newToast = { id: nextId, text: text }
+    connectToastList((text, type) => {
+      const newToast = { id: nextId, text: text, type: type }
       nextId = nextId + 1
       setToasts((oldToasts) => [...oldToasts, newToast])
     })
@@ -59,7 +59,7 @@ function ToastList() {
   return (
     <div className="toast-list">
       {toasts.map((toast) => (
-        <Toast key={toast.id} text={toast.text} onClose={() => closeToast(toast.id)} />
+        <Toast key={toast.id} text={toast.text} type={toast.type} onClose={() => closeToast(toast.id)} />
       ))}
     </div>
   )

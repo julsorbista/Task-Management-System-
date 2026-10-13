@@ -158,8 +158,14 @@ function Profile() {
 
   // ---------- Delete account ----------
   async function handleDeleteAccount() {
-    await deleteAccount()
-    navigate('/login')
+    try {
+      await deleteAccount()
+      // The log in screen shows this message (it is passed along with the page change)
+      navigate('/login', { replace: true, state: { toast: 'Your account has been deleted' } })
+    } catch (error) {
+      setIsConfirmingDelete(false)
+      showToast(error.message, 'error')
+    }
   }
 
 

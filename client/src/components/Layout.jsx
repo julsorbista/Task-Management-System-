@@ -19,6 +19,7 @@ import WorkspacePlaceholder from './WorkspacePlaceholder.jsx'
 import { getCurrentUser, getPages, getTasks, getNotifications, getUsers } from '../api/api.js'
 import './Layout.css'
 import { workspaceSnapshot, clearWorkspaceSnapshot } from '../utils/workspaceSnapshot.js'
+import { startNotificationRefresh } from '../utils/notificationRefresh.js'
 
 function Layout({ children, reloadSignal }) {
   const navigate = useNavigate()
@@ -40,6 +41,16 @@ function Layout({ children, reloadSignal }) {
   // Goes up by one each time the sidebar changes something, to load the data again
   const [reloadCount, setReloadCount] = useState(0)
   const boardWriteRevision = useRef(0)
+
+  useEffect(() => {
+    function syncNotifications() { setUnreadCount(workspaceSnapshot.unreadCount) }
+    window.addEventListener('morrow-notifications-changed', syncNotifications)
+    const stop = startNotificationRefresh(getNotifications)
+    return () => {
+      stop()
+      window.removeEventListener('morrow-notifications-changed', syncNotifications)
+    }
+  }, [])
 
   useEffect(() => {
     function syncWorkspace() {

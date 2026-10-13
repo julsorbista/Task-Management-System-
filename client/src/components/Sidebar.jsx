@@ -247,6 +247,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
       </div>
 
       {/* Dashboard tab */}
+      <nav className="sidebar-navigation" aria-label="Workspace navigation">
       <div className="sidebar-dashboard">
         <Link
           to="/dashboard"
@@ -293,6 +294,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
       </div>
       {renderPages(sharedPages)}
       {addingType === 'shared' && renderNewPageInput()}
+      </nav>
 
       {/* Bottom row: the user (opens Profile) and the log out button */}
       <div className="sidebar-user">

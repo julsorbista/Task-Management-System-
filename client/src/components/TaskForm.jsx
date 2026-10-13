@@ -13,7 +13,7 @@ import Icon from './Icon.jsx'
 import { todayString, addDays, toDate, toDateString, formatDate, formatTime } from '../utils/helpers.js'
 import './TaskForm.css'
 
-function TaskForm({ task, page, users, onSave, onCancel }) {
+function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
   // A task that already has an _id is being edited. Without one it is new.
   const isEditing = Boolean(task._id)
   const isShared = page.type === 'shared'
@@ -89,13 +89,13 @@ function TaskForm({ task, page, users, onSave, onCancel }) {
   }
 
   // People who can be assigned: the members of this page
-  const members = page.members.map((member) => users.find((user) => user._id === member.user)).filter(Boolean)
+  const members = (page.members || []).map((member) => users.find((user) => user._id === member.user)).filter(Boolean)
 
   return (
     <div className="overlay">
       <div className="modal" role="dialog" aria-label={isEditing ? 'Edit task' : 'New task'}>
         <div className="modal-header">
-          <h2 className="modal-title">{isEditing ? 'Edit task' : 'New task'}</h2>
+          <h2 className="modal-title">{readOnly ? 'Task details' : isEditing ? 'Edit task' : 'New task'}</h2>
           <span className="small-text">
             {isShared ? 'Shared' : 'Private'} · {page.name}
           </span>
@@ -104,6 +104,7 @@ function TaskForm({ task, page, users, onSave, onCancel }) {
           </button>
         </div>
 
+        <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         {/* Title */}
         <div className="field">
           <label className="label" htmlFor="task-title">
@@ -230,7 +231,7 @@ function TaskForm({ task, page, users, onSave, onCancel }) {
         {/* Assignee: only on shared pages */}
         {isShared && (
           <div className="field">
-            <span className="label">Assignee</span>
+            <span className="label">Assign</span>
             <div className="row">
               <button
                 type="button"
@@ -295,13 +296,14 @@ function TaskForm({ task, page, users, onSave, onCancel }) {
           {reminderError && <div className="error-text">{reminderError}</div>}
         </div>
 
+        </fieldset>
         <div className="modal-footer">
           <button type="button" className="btn" onClick={onCancel}>
             Cancel
           </button>
-          <button type="button" className="btn btn-primary" onClick={handleSave}>
+          {!readOnly && <button type="button" className="btn btn-primary" onClick={handleSave}>
             {isEditing ? 'Save changes' : 'Add task'}
-          </button>
+          </button>}
         </div>
       </div>
     </div>

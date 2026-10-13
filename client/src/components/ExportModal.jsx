@@ -2,12 +2,13 @@
 // Export options, opened from the Export button on the Dashboard:
 //   - CSV or PDF
 //   - All tasks or Selected tasks (with a task picker)
-//   - date range
 //   - Private / Shared scope
 
 import { useState } from 'react'
 import Icon from './Icon.jsx'
 import { showToast } from '../utils/toast.js'
+import { getCurrentUser } from '../api/api.js'
+import { exportMetadata } from '../utils/exportMetadata.js'
 import { PRIORITY_LABELS, STATUS_LABELS, formatDue, isOverdue } from '../utils/helpers.js'
 import './ExportModal.css'
 
@@ -15,29 +16,23 @@ function ExportModal({ tasks, pages, users, onClose }) {
 
   const [format, setFormat] = useState('csv') // 'csv' or 'pdf'
   const [mode, setMode] = useState('all') // 'all' or 'selected'
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
   const [scope, setScope] = useState('both') // 'both', 'private' or 'shared'
   const [searchText, setSearchText] = useState('')
   const [selectedIds, setSelectedIds] = useState([]) // ids of the ticked tasks
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportError, setExportError] = useState('')
 
   // Find the page of a task (to know if it is Private or Shared)
   function getPageOf(task) {
     return pages.find((page) => page._id === task.page)
   }
 
-  const isDateRangeWrong = dateFrom !== '' && dateTo !== '' && dateFrom > dateTo
-
-  // 1. Tasks that match the date range and the scope
+  // 1. Tasks that match the scope
   const matchingTasks = tasks.filter((task) => {
     const page = getPageOf(task)
     if (!page) return false
     if (scope === 'private' && page.type !== 'private') return false
     if (scope === 'shared' && page.type !== 'shared') return false
-    if (dateFrom === '' && dateTo === '') return true
-    if (!task.dueDate) return false
-    if (dateFrom !== '' && task.dueDate < dateFrom) return false
-    if (dateTo !== '' && task.dueDate > dateTo) return false
     return true
   })
 
@@ -96,14 +91,21 @@ function ExportModal({ tasks, pages, users, onClose }) {
   const COLUMN_NAMES = ['Title', 'Description', 'Due date', 'Due time', 'Priority', 'Status', 'Page', 'Scope', 'Assignee']
 
   // CSV: text with commas between values. The browser downloads it as a file.
-  function downloadCsv() {
+  function downloadCsv(user) {
     // Wrap each value in quotes so commas inside a value do not break the file
     function quote(value) {
       let text = String(value ?? '')
       if (/^[\s]*[=+@-]|^[\t\r\n]/.test(text)) text = "'" + text
       return '"' + text.replaceAll('"', '""') + '"'
     }
-    const lines = [COLUMN_NAMES, ...buildRows()].map((row) => row.map(quote).join(','))
+    const metadata = exportMetadata(user)
+    const heading = [
+      [metadata.title],
+      ['Date and Time:', metadata.dateTime],
+      ['Exported by:', metadata.exportedBy],
+      [],
+    ].map((row) => Array.from({ length: COLUMN_NAMES.length }, (_, index) => row[index] ?? ''))
+    const lines = [...heading, COLUMN_NAMES, ...buildRows()].map((row) => row.map(quote).join(','))
     const file = new Blob(['\uFEFF', lines.join('\r\n')], { type: 'text/csv;charset=utf-8' })
 
     // Make a temporary link to the file and click it
@@ -114,45 +116,26 @@ function ExportModal({ tasks, pages, users, onClose }) {
     URL.revokeObjectURL(link.href)
   }
 
-  // PDF: open a simple printable page. In the print window choose "Save as PDF".
-  // Returns false when the browser blocked the new window.
-  function openPrintablePage() {
-    // Replace characters that have a special meaning in HTML
-    function safe(value) {
-      return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-    }
-    const headCells = COLUMN_NAMES.map((name) => '<th>' + name + '</th>').join('')
-    const bodyRows = buildRows()
-      .map((row) => '<tr>' + row.map((value) => '<td>' + safe(value) + '</td>').join('') + '</tr>')
-      .join('')
-
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) return false // the browser blocked the new window
-    printWindow.document.write(
-      '<html><head><title>Morrow tasks</title><style>' +
-        'body{font-family:sans-serif;font-size:12px;padding:24px}' +
-        'table{border-collapse:collapse;width:100%}' +
-        'th,td{border:1px solid #ccc;padding:6px;text-align:left}' +
-        '</style></head><body><h1>Morrow tasks</h1><table><tr>' +
-        headCells +
-        '</tr>' +
-        bodyRows +
-        '</table></body></html>',
-    )
-    printWindow.document.close()
-    printWindow.print()
-    return true
-  }
-
-  function handleExport() {
-    let isFinished = true
-    if (format === 'csv') downloadCsv()
-    else isFinished = openPrintablePage()
-    if (isFinished) {
-      showToast(format === 'csv' ? 'CSV downloaded' : 'Choose Save as PDF in the print dialog')
+  // Generate the PDF directly so browser print headers are never included.
+  async function handleExport() {
+    if (isExporting) return
+    setIsExporting(true)
+    setExportError('')
+    try {
+      const user = await getCurrentUser()
+      if (!user) throw new Error('Please log in again before exporting.')
+      if (format === 'csv') downloadCsv(user)
+      else {
+        const { createTaskPdf } = await import('../utils/taskPdf.js')
+        const pdf = createTaskPdf({ columns: COLUMN_NAMES, rows: buildRows(), exportedBy: user })
+        pdf.save('morrow-tasks.pdf')
+      }
+      showToast(format === 'csv' ? 'CSV downloaded' : 'PDF downloaded')
       onClose()
-    } else {
-      showToast('Allow pop-ups to open the PDF print window.')
+    } catch (error) {
+      setExportError(error.message || 'Could not export tasks. Please try again.')
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -188,7 +171,7 @@ function ExportModal({ tasks, pages, users, onClose }) {
               onClick={() => setFormat('pdf')}
             >
               <div className="section-title">PDF</div>
-              <div className="small-text">Printable task list</div>
+              <div className="small-text">Downloadable task list</div>
             </button>
           </div>
         </div>
@@ -246,41 +229,11 @@ function ExportModal({ tasks, pages, users, onClose }) {
                 </label>
               ))}
               {listedTasks.length === 0 && (
-                <div className="small-text export-none">No tasks match the date range, scope and search.</div>
+                <div className="small-text export-none">No tasks match the scope and search.</div>
               )}
             </div>
           </div>
         )}
-
-        {/* Date range */}
-        <div className="two-columns">
-          <div className="field">
-            <label className="label" htmlFor="export-from">
-              Due from
-            </label>
-            <input
-              id="export-from"
-              type="date"
-              className={isDateRangeWrong ? 'input has-error' : 'input'}
-              value={dateFrom}
-              onChange={(event) => setDateFrom(event.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="export-to">
-              Due to
-            </label>
-            <input
-              id="export-to"
-              type="date"
-              className={isDateRangeWrong ? 'input has-error' : 'input'}
-              value={dateTo}
-              onChange={(event) => setDateTo(event.target.value)}
-            />
-          </div>
-        </div>
-        {isDateRangeWrong && <div className="error-text export-date-error">The start date must be before the end date.</div>}
-        <p className="small-text">Leave both dates blank to include tasks with no due date.</p>
 
         {/* Scope */}
         <div className="field">
@@ -306,19 +259,21 @@ function ExportModal({ tasks, pages, users, onClose }) {
           </div>
         </div>
 
+        {exportError && <p role="alert" className="error-text">{exportError}</p>}
+
         {/* Footer: count, Cancel, Export */}
         <div className="export-footer">
-          <span className="muted export-count">{isDateRangeWrong ? '' : countText}</span>
+          <span className="muted export-count">{countText}</span>
           <button type="button" className="btn" onClick={onClose}>
             Cancel
           </button>
           <button
             type="button"
             className="btn btn-primary"
-            disabled={isDateRangeWrong || exportCount === 0}
+            disabled={isExporting || exportCount === 0}
             onClick={handleExport}
           >
-            Export {format.toUpperCase()}
+            {isExporting ? 'Exporting...' : 'Export ' + format.toUpperCase()}
           </button>
         </div>
       </div>

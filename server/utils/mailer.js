@@ -53,4 +53,22 @@ async function sendPasswordResetEmail({ to, link }) {
   })
 }
 
-module.exports = { sendLoginOtpEmail, sendPasswordResetEmail }
+const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
+
+async function sendBoardInvitationEmail({ to, boardName, senderName, role, link }) {
+  if (!hasSmtpConfig()) throw new Error('SMTP is required for invitations')
+  const accept = `${link}&action=accept`
+  const decline = `${link}&action=decline`
+  await createTransporter().sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER, to,
+    subject: `Invitation to ${boardName} on Morrow`,
+    text: `${senderName} invited you to "${boardName}" as ${role}.\nAccept invitation: ${accept}\nDecline invitation: ${decline}\nSign in with ${to} to confirm your choice. This invitation expires in 7 days.`,
+    html: `<div style="font-family:Arial,sans-serif;line-height:1.6"><h2>You're invited to ${escapeHtml(boardName)}</h2>
+      <p>${escapeHtml(senderName)} invited you as <strong>${escapeHtml(role)}</strong>.</p>
+      <p><a href="${escapeHtml(accept)}" style="background:#4f706b;color:white;padding:12px 18px;border-radius:6px;display:inline-block">Accept invitation</a>
+      <a href="${escapeHtml(decline)}" style="padding:12px 18px;display:inline-block">Decline invitation</a></p>
+      <p>Sign in with ${escapeHtml(to)} to confirm your choice. This invitation expires in 7 days.</p></div>`,
+  })
+}
+
+module.exports = { sendLoginOtpEmail, sendPasswordResetEmail, sendBoardInvitationEmail }

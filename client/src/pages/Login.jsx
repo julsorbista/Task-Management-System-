@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard.jsx'
 import Icon from '../components/Icon.jsx'
-import { login, verifyLoginOtp, getPages, getCurrentUser } from '../api/api.js'
+import { login, verifyLoginOtp, getPages, getCurrentUser, getTasks, getUsers, getNotifications } from '../api/api.js'
+import { workspaceSnapshot } from '../utils/workspaceSnapshot.js'
 import { isValidEmail, isValidPassword, isValidUsername } from '../utils/helpers.js'
 
 function Login() {
@@ -19,9 +20,50 @@ function Login() {
   const [otpChallenge, setOtpChallenge] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [resendSeconds, setResendSeconds] = useState(0)
+  const [isResending, setIsResending] = useState(false)
+  const [otpMessage, setOtpMessage] = useState('')
+  useEffect(() => {
+    if (resendSeconds <= 0) return
+    const timer = setTimeout(() => setResendSeconds((seconds) => Math.max(0, seconds - 1)), 1000)
+    return () => clearTimeout(timer)
+  }, [resendSeconds])
+
+  async function handleResendOtp() {
+    if (isSubmitting || isResending || resendSeconds > 0) return
+    setIsResending(true)
+    setOtpError('')
+    setOtpMessage('')
+    try {
+      const challenge = await login(identifier.trim(), password)
+      if (challenge.otpRequired === false) {
+        await openFirstTaskPage()
+        return
+      }
+      setOtpChallenge(challenge)
+      setOtp('')
+      setResendSeconds(60)
+      setOtpMessage('A new code was sent. Use the latest email; the old code no longer works.')
+    } catch (error) {
+      setOtpError(error.message)
+    } finally {
+      setIsResending(false)
+    }
+  }
 
   async function openFirstTaskPage() {
-    const pages = await getPages()
+    const invitationReturn = sessionStorage.getItem('morrow-invitation-return')
+    if (invitationReturn && /^\/invitations\?(?:token=[a-f0-9]{64}|id=[a-f0-9]{24})(?:&action=(?:accept|decline))?$/.test(invitationReturn)) {
+      sessionStorage.removeItem('morrow-invitation-return')
+      navigate(invitationReturn)
+      return
+    }
+    const [pages, user, users, notifications] = await Promise.all([
+      getPages(), getCurrentUser(), getUsers(), getNotifications(),
+    ])
+    const tasks = await getTasks(pages)
+    Object.assign(workspaceSnapshot, { pages, user, users, notifications, tasks,
+      unreadCount: notifications.filter((item) => !item.isRead).length, loaded: true })
     if (pages.length > 0) navigate('/pages/' + pages[0]._id + '/list')
     else navigate('/dashboard')
   }
@@ -56,6 +98,8 @@ function Login() {
         return
       }
       setOtpChallenge(challenge)
+      setResendSeconds(60)
+      setOtpMessage('')
       setOtp('')
       setOtpError('')
     } catch (error) {
@@ -67,7 +111,7 @@ function Login() {
 
   async function handleOtpSubmit(event) {
     event.preventDefault()
-    if (isSubmitting) return
+    if (isSubmitting || isResending) return
 
     const cleanOtp = otp.trim()
     if (!/^\d{6}$/.test(cleanOtp)) {
@@ -128,6 +172,12 @@ function Login() {
           </button>
         </form>
 
+        <p className="auth-bottom">
+          <button type="button" className="link" onClick={handleResendOtp} disabled={isSubmitting || isResending || resendSeconds > 0}>
+            {isResending ? 'Sending…' : resendSeconds > 0 ? `Resend OTP in ${resendSeconds}s` : 'Resend OTP'}
+          </button>
+        </p>
+        {otpMessage && <p role="status" className="auth-bottom">{otpMessage}</p>}
         <p className="auth-bottom">
           <button type="button" className="link" onClick={resetLogin} disabled={isSubmitting}>
             Use a different account

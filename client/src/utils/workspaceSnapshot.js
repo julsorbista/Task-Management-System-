@@ -1,4 +1,4 @@
-export const workspaceSnapshot = { user: null, pages: [], tasks: [], unreadCount: 0 }
+export const workspaceSnapshot = { user: null, pages: [], tasks: [], notifications: [], unreadCount: 0, users: [], boards: {}, loaded: false }
 export function clearWorkspaceSnapshot() {
-  Object.assign(workspaceSnapshot, { user: null, pages: [], tasks: [], unreadCount: 0 })
+  Object.assign(workspaceSnapshot, { user: null, pages: [], tasks: [], notifications: [], unreadCount: 0, users: [], boards: {}, loaded: false })
 }

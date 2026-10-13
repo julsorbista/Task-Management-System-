@@ -15,7 +15,8 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar.jsx'
 import Icon from './Icon.jsx'
-import { getCurrentUser, getPages, getTasks, getNotifications } from '../api/api.js'
+import WorkspacePlaceholder from './WorkspacePlaceholder.jsx'
+import { getCurrentUser, getPages, getTasks, getNotifications, getUsers } from '../api/api.js'
 import './Layout.css'
 import { workspaceSnapshot, clearWorkspaceSnapshot } from '../utils/workspaceSnapshot.js'
 
@@ -53,11 +54,15 @@ function Layout({ children, reloadSignal }) {
         return
       }
       setUser(currentUser)
-      const [allNotifications, allPages] = await Promise.all([getNotifications(), getPages()])
+      workspaceSnapshot.user = currentUser
+      const [allNotifications, allPages, allUsers] = await Promise.all([getNotifications(), getPages(), getUsers()])
       const allTasks = await getTasks(allPages)
       if (!active) return
       const count = allNotifications.filter((n) => !n.isRead).length
-      Object.assign(workspaceSnapshot, { user: currentUser, pages: allPages, tasks: allTasks, unreadCount: count })
+      Object.assign(workspaceSnapshot, { user: currentUser, pages: allPages, tasks: allTasks, notifications: allNotifications, unreadCount: count, users: allUsers, loaded: true })
+      for (const id of Object.keys(workspaceSnapshot.boards)) {
+        if (!allPages.some((board) => board._id === id)) delete workspaceSnapshot.boards[id]
+      }
       setPages(allPages)
       setTasks(allTasks)
       setUnreadCount(count)
@@ -86,7 +91,12 @@ function Layout({ children, reloadSignal }) {
   const isOnNotifications = location.pathname === '/notifications'
 
   // Wait for the user before drawing anything
-  if (!user) return <div className="content"><p role={loadError ? 'alert' : 'status'}>{loadError || 'Loading workspace…'}</p></div>
+  if (!user) return <div className="layout">
+    <aside className="sidebar" aria-hidden="true"><WorkspacePlaceholder /></aside>
+    <div className="layout-main"><header className="topbar" /><div className="workspace-scroll"><main className="content">
+      {loadError ? <p role="alert">{loadError}</p> : <WorkspacePlaceholder />}
+    </main></div></div>
+  </div>
 
   return (
     <div className="layout">
@@ -142,7 +152,9 @@ function Layout({ children, reloadSignal }) {
           </div>
         </header>
 
-        <main className="content">{loadError && <p role="alert" className="error-text">{loadError}</p>}{children}</main>
+        <div className="workspace-scroll" key={location.pathname}>
+          <main className="content">{loadError && <p role="alert" className="error-text">{loadError}</p>}{children}</main>
+        </div>
       </div>
     </div>
   )

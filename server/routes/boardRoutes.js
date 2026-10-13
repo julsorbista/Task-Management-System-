@@ -7,7 +7,6 @@ const {
   deleteBoard,
   getBoard,
   getBoards,
-  inviteBoardMember,
   removeBoardMember,
   updateBoardMemberRole,
   updateBoard,
@@ -43,7 +42,7 @@ function requireWriteRequest(req, res, next) {
 
 router.post('/', requireWriteRequest, createBoard)
 router.get('/', getBoards)
-router.post('/:boardId/members', requireWriteRequest, canManageBoard, inviteBoardMember)
+router.post('/:boardId/members', requireWriteRequest, canManageBoard, require('../controllers/invitationController').sendInvitation)
 router.patch('/:boardId/members/:userId', requireWriteRequest, canManageBoard, updateBoardMemberRole)
 router.delete('/:boardId/members/:userId', requireWriteRequest, canManageBoard, removeBoardMember)
 router.get('/:boardId', canViewBoard, getBoard)

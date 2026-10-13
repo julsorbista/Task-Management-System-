@@ -11,6 +11,7 @@ import ForgotPassword from './pages/ForgotPassword.jsx'
 import CheckEmail from './pages/CheckEmail.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
 import PasswordUpdated from './pages/PasswordUpdated.jsx'
+import Invitation from './pages/Invitation.jsx'
 
 // Workspace pages (these will get the sidebar in step 3)
 import Dashboard from './pages/Dashboard.jsx'
@@ -34,6 +35,7 @@ function App() {
         <Route path="/check-email" element={<CheckEmail />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/password-updated" element={<PasswordUpdated />} />
+        <Route path="/invitations" element={<Invitation />} />
 
         {/* Workspace screens */}
         <Route path="/dashboard" element={<Dashboard />} />

@@ -37,6 +37,8 @@ async function createAssignmentNotification(task, assignee, actingUserId) {
   if (!assignee || String(assignee) === String(actingUserId)) return
 
   await Notification.create({
+    task: task._id,
+    page: task.board,
     user: assignee,
     title: 'Task assigned',
     message: `You were assigned to "${task.title}".`,
@@ -228,6 +230,9 @@ async function updateTask(req, res, next) {
   }
 
   const body = req.body || {}
+  if (req.boardRole === 'viewer' && (
+    Object.keys(body).length !== 1 || !['todo', 'done'].includes(body.status)
+  )) return res.status(403).json({ message: 'Viewers can only check or uncheck tasks.' })
   const changes = collectTaskChanges(body, res)
 
   if (!changes) return

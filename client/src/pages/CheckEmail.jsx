@@ -29,9 +29,16 @@ function CheckEmail() {
   return (
     <AuthCard
       title="Check your email"
-      text={'If an account exists for ' + email + ', you will receive a reset link. It expires in 30 minutes.'}
+      text={<>Check <span style={{ color: 'var(--text)' }}>{email}</span> for your password reset link. It expires in 30 minutes.</>}
     >
-      <p className="small-text">Open the link in your email. Check your spam folder too.</p>
+      <a
+        className="btn btn-wide"
+        href="https://mail.google.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Open your email
+      </a>
       {error && <p role="alert" className="error-text">{error}</p>}
 
       <p className="auth-bottom">

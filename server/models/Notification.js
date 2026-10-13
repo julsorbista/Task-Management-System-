@@ -14,6 +14,12 @@ const notificationSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    page: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Board',
+    },
+    task: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
+    invitation: { type: mongoose.Schema.Types.ObjectId, ref: 'BoardInvitation' },
     message: {
       type: String,
       required: true,

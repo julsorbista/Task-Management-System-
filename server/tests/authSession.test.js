@@ -29,6 +29,12 @@ test('register → OTP → MongoDB current-user stays authenticated; invalid/rep
   }
   stub(mongoose.connection, 'transaction', async (callback) => callback({}))
   const records = new Map()
+  stub(OtpChallenge, 'deleteMany', async () => { records.clear() })
+  stub(User, 'findOneAndUpdate', async (query, update) => {
+    if (savedUser.lastOtpSentAt && savedUser.lastOtpSentAt > query.$or[1].lastOtpSentAt.$lte) return null
+    savedUser.lastOtpSentAt = update.$set.lastOtpSentAt
+    return savedUser
+  })
   stub(OtpChallenge, 'create', async (data) => { records.set(data._id, { ...data, attempts: 0 }); return data })
   stub(OtpChallenge, 'findOneAndUpdate', async (query) => {
     const record = records.get(query._id)
@@ -98,7 +104,20 @@ test('register → OTP → MongoDB current-user stays authenticated; invalid/rep
   response = await post('/api/auth/login', { identifier: 'testuser', password: 'ExamplePassword123' })
   assert.equal(response.status, 200)
   assert.equal(response.headers.get('set-cookie'), null)
-  const challenge = await response.json()
+  let challenge = await response.json()
+  response = await post('/api/auth/login', { identifier: 'testuser', password: 'ExamplePassword123' })
+  assert.equal(response.status, 429)
+  const expiredChallenge = challenge
+  records.get(challenge.challengeId).expiresAt = new Date(Date.now() - 1000)
+  response = await post('/api/auth/login/verify-otp', { challengeId: challenge.challengeId, otp: deliveredOtp })
+  assert.equal(response.status, 401)
+  savedUser.lastOtpSentAt = new Date(Date.now() - 61000)
+  response = await post('/api/auth/login', { identifier: 'testuser', password: 'ExamplePassword123' })
+  assert.equal(response.status, 200)
+  challenge = await response.json()
+  assert.notEqual(challenge.challengeId, expiredChallenge.challengeId)
+  response = await post('/api/auth/login/verify-otp', { challengeId: expiredChallenge.challengeId, otp: deliveredOtp })
+  assert.equal(response.status, 401)
   const wrongOtp = deliveredOtp === '000000' ? '000001' : '000000'
   response = await post('/api/auth/login/verify-otp', { challengeId: challenge.challengeId, otp: wrongOtp })
   assert.equal(response.status, 401)

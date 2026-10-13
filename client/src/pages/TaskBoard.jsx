@@ -4,16 +4,18 @@
 //   - clicking a card opens the task form
 //   - each card has a red delete icon beside the assignee avatar
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import useBoardData from '../utils/useBoardData.js'
 import { useParams } from 'react-router-dom'
 import Layout from '../components/Layout.jsx'
+import WorkspacePlaceholder from '../components/WorkspacePlaceholder.jsx'
 import TaskHeader from '../components/TaskHeader.jsx'
 import TaskForm from '../components/TaskForm.jsx'
 import ConfirmDelete from '../components/ConfirmDelete.jsx'
 import ShareModal from '../components/ShareModal.jsx'
 import { showToast } from '../utils/toast.js'
 import Icon from '../components/Icon.jsx'
-import { getPage, getTasksByPage, getUsers, getCurrentUser, createTask, updateTask, deleteTask } from '../api/api.js'
+import { createTask, updateTask, deleteTask } from '../api/api.js'
 import {
   DEFAULT_FILTERS,
   PRIORITY_LABELS,
@@ -36,13 +38,13 @@ function TaskBoard() {
   const { pageId } = useParams()
 
   // Data
-  const [page, setPage] = useState(null)
-  const [tasks, setTasks] = useState([])
-  const [users, setUsers] = useState([])
-  const [currentUser, setCurrentUser] = useState(null)
-  const [hasLoaded, setHasLoaded] = useState(false)
-  const [loadError, setLoadError] = useState('')
   const [reloadCount, setReloadCount] = useState(0)
+  const { page, tasks, users, currentUser, setTasks, hasLoaded, loadError } = useBoardData(pageId, reloadCount)
+  const canEditTasks = Boolean(currentUser && page && (
+    page.owner === currentUser._id ||
+    page.members?.some((member) => member.user === currentUser._id && member.role === 'editor')
+  ))
+
 
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
 
@@ -56,32 +58,8 @@ function TaskBoard() {
   const [taskToDelete, setTaskToDelete] = useState(null)
   const [isShareOpen, setIsShareOpen] = useState(false)
 
-  useEffect(() => {
-    let active = true
-    setHasLoaded(false)
-    setLoadError('')
-    async function loadData() {
-      try {
-        const [board, boardTasks, allUsers, user] = await Promise.all([
-          getPage(pageId), getTasksByPage(pageId), getUsers(), getCurrentUser(),
-        ])
-        if (!active) return
-        setPage(board)
-        setTasks(boardTasks)
-        setUsers(allUsers)
-        setCurrentUser(user)
-      } catch (error) {
-        if (active) setLoadError(error.message || 'Failed to load tasks.')
-      } finally {
-        if (active) setHasLoaded(true)
-      }
-    }
-    loadData()
-    return () => { active = false }
-  }, [pageId, reloadCount])
-
   function reloadData() {
-    setReloadCount(reloadCount + 1)
+    setReloadCount((count) => count + 1)
   }
 
   // ---------- Create ----------
@@ -98,34 +76,35 @@ function TaskBoard() {
     }
     const newTask = makeEmptyTask(pageId, addingStatus)
     newTask.title = newTitle.trim()
-    await createTask(newTask)
+    const savedTask = await createTask(newTask)
+    setTasks((items) => [...items, savedTask])
     setNewTitle('')
     showToast('Task added')
-    reloadData()
   }
 
   // ---------- Update ----------
   async function handleSaveTask(taskData) {
     if (taskData._id) {
-      await updateTask(pageId, taskData._id, taskData)
+      const savedTask = await updateTask(pageId, taskData._id, taskData)
+      setTasks((items) => items.map((item) => item._id === savedTask._id ? savedTask : item))
       showToast('Task updated')
     } else {
-      await createTask(taskData)
+      const savedTask = await createTask(taskData)
+      setTasks((items) => [...items, savedTask])
       showToast('Task added')
     }
     setFormTask(null)
-    reloadData()
   }
 
   // ---------- Delete ----------
   async function handleConfirmDelete() {
     await deleteTask(pageId, taskToDelete._id)
+    setTasks((items) => items.filter((item) => item._id !== taskToDelete._id))
     setTaskToDelete(null)
     showToast('Task deleted')
-    reloadData()
   }
 
-  if (!hasLoaded) return <Layout><p role="status">Loading tasks…</p></Layout>
+  if (!hasLoaded) return <Layout><WorkspacePlaceholder pageId={pageId} /></Layout>
   if (loadError) return <Layout><p role="alert" className="error-text">{loadError}</p></Layout>
 
   if (!page) {
@@ -191,7 +170,7 @@ function TaskBoard() {
                           className="icon-btn board-card-delete"
                           aria-label="Delete task"
                           title="Delete task"
-                          onClick={() => setTaskToDelete(task)}
+                          style={{ display: canEditTasks ? undefined : 'none' }} onClick={() => setTaskToDelete(task)}
                         >
                           <Icon name="trash" />
                         </button>
@@ -233,7 +212,7 @@ function TaskBoard() {
                   </div>
                 </div>
               ) : (
-                <button type="button" className="board-add" onClick={() => startAdding(column.status)}>
+                <button type="button" className="board-add" style={{ display: canEditTasks ? undefined : 'none' }} onClick={() => startAdding(column.status)}>
                   <Icon name="plus" />
                   Add task
                 </button>
@@ -245,7 +224,7 @@ function TaskBoard() {
 
       {/* Pop-up windows */}
       {formTask && (
-        <TaskForm
+        <TaskForm readOnly={!canEditTasks}
           key={formTask._id || 'new'}
           task={formTask}
           page={page}

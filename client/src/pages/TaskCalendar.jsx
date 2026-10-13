@@ -4,15 +4,17 @@
 //   - clicking a task opens the task form
 //   - there is no delete here
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import useBoardData from '../utils/useBoardData.js'
 import { useParams } from 'react-router-dom'
 import Layout from '../components/Layout.jsx'
+import WorkspacePlaceholder from '../components/WorkspacePlaceholder.jsx'
 import TaskHeader from '../components/TaskHeader.jsx'
 import TaskForm from '../components/TaskForm.jsx'
 import ShareModal from '../components/ShareModal.jsx'
 import { showToast } from '../utils/toast.js'
 import Icon from '../components/Icon.jsx'
-import { getPage, getTasksByPage, getUsers, getCurrentUser, createTask, updateTask } from '../api/api.js'
+import { createTask, updateTask } from '../api/api.js'
 import { DEFAULT_FILTERS, filterAndSortTasks, formatTime, isOverdue, toDateString, todayString } from '../utils/helpers.js'
 import './TaskCalendar.css'
 
@@ -23,13 +25,13 @@ function TaskCalendar() {
   const { pageId } = useParams()
 
   // Data
-  const [page, setPage] = useState(null)
-  const [tasks, setTasks] = useState([])
-  const [users, setUsers] = useState([])
-  const [currentUser, setCurrentUser] = useState(null)
-  const [hasLoaded, setHasLoaded] = useState(false)
-  const [loadError, setLoadError] = useState('')
   const [reloadCount, setReloadCount] = useState(0)
+  const { page, tasks, users, currentUser, setTasks, hasLoaded, loadError } = useBoardData(pageId, reloadCount)
+  const canEditTasks = Boolean(currentUser && page && (
+    page.owner === currentUser._id ||
+    page.members?.some((member) => member.user === currentUser._id && member.role === 'editor')
+  ))
+
 
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
 
@@ -41,32 +43,8 @@ function TaskCalendar() {
   const [formTask, setFormTask] = useState(null)
   const [isShareOpen, setIsShareOpen] = useState(false)
 
-  useEffect(() => {
-    let active = true
-    setHasLoaded(false)
-    setLoadError('')
-    async function loadData() {
-      try {
-        const [board, boardTasks, allUsers, user] = await Promise.all([
-          getPage(pageId), getTasksByPage(pageId), getUsers(), getCurrentUser(),
-        ])
-        if (!active) return
-        setPage(board)
-        setTasks(boardTasks)
-        setUsers(allUsers)
-        setCurrentUser(user)
-      } catch (error) {
-        if (active) setLoadError(error.message || 'Failed to load tasks.')
-      } finally {
-        if (active) setHasLoaded(true)
-      }
-    }
-    loadData()
-    return () => { active = false }
-  }, [pageId, reloadCount])
-
   function reloadData() {
-    setReloadCount(reloadCount + 1)
+    setReloadCount((count) => count + 1)
   }
 
   // ---------- Month buttons ----------
@@ -96,17 +74,18 @@ function TaskCalendar() {
   // ---------- Update ----------
   async function handleSaveTask(taskData) {
     if (taskData._id) {
-      await updateTask(taskData._id, taskData)
+      const savedTask = await updateTask(pageId, taskData._id, taskData)
+      setTasks((items) => items.map((item) => item._id === savedTask._id ? savedTask : item))
       showToast('Task updated')
     } else {
-      await createTask(taskData)
+      const savedTask = await createTask(taskData)
+      setTasks((items) => [...items, savedTask])
       showToast('Task added')
     }
     setFormTask(null)
-    reloadData()
   }
 
-  if (!hasLoaded) return <Layout><p role="status">Loading tasks…</p></Layout>
+  if (!hasLoaded) return <Layout><WorkspacePlaceholder pageId={pageId} /></Layout>
   if (loadError) return <Layout><p role="alert" className="error-text">{loadError}</p></Layout>
 
   if (!page) {
@@ -229,7 +208,7 @@ function TaskCalendar() {
 
       {/* Pop-up windows (no delete confirmation: the calendar has no delete) */}
       {formTask && (
-        <TaskForm
+        <TaskForm readOnly={!canEditTasks}
           key={formTask._id || 'new'}
           task={formTask}
           page={page}

@@ -4,18 +4,20 @@
 
 import { useState, useEffect } from 'react'
 import Layout from '../components/Layout.jsx'
+import WorkspacePlaceholder from '../components/WorkspacePlaceholder.jsx'
 import ExportModal from '../components/ExportModal.jsx'
 import Icon from '../components/Icon.jsx'
 import { getTasks, getPages, getUsers } from '../api/api.js'
 import { isOverdue, todayString, addDays, toDate, formatDate } from '../utils/helpers.js'
 import './Dashboard.css'
+import { workspaceSnapshot } from '../utils/workspaceSnapshot.js'
 
 function Dashboard() {
-  const [tasks, setTasks] = useState([])
-  const [pages, setPages] = useState([])
-  const [users, setUsers] = useState([])
+  const [tasks, setTasks] = useState(workspaceSnapshot.tasks)
+  const [pages, setPages] = useState(workspaceSnapshot.pages)
+  const [users, setUsers] = useState(workspaceSnapshot.users)
   const [isExportOpen, setIsExportOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(!workspaceSnapshot.loaded)
   const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
@@ -106,7 +108,7 @@ function Dashboard() {
         </button>
       </div>
 
-      {isLoading && <p role="status">Loading dashboard…</p>}
+      {isLoading && <WorkspacePlaceholder />}
       {loadError && <p role="alert" className="error-text">{loadError}</p>}
       {!isLoading && !loadError && <>
       {/* Four number tiles */}

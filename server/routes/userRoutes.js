@@ -45,6 +45,7 @@ function requireWriteRequest(req, res, next) {
 
 router.get('/', getUsers)
 router.get('/me', getCurrentUser)
+router.patch('/me/password', requireWriteRequest, require('../controllers/profilePasswordController').changePassword)
 router.patch('/me', requireWriteRequest, updateCurrentUser)
 router.delete('/me', requireWriteRequest, deleteCurrentUser)
 

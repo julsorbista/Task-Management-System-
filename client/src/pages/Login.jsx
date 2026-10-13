@@ -186,7 +186,7 @@ function Login() {
         </div>
 
         <button type="submit" className="btn btn-primary btn-wide" disabled={isSubmitting}>
-          {isSubmitting ? 'Sending OTP…' : 'Log in'}
+          {isSubmitting ? 'Logging in…' : 'Log in'}
         </button>
       </form>
 

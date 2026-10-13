@@ -3,6 +3,7 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ToastList from './components/Toast.jsx'
+import NavigationToast from './components/NavigationToast.jsx'
 
 // Auth pages (no sidebar)
 import Login from './pages/Login.jsx'
@@ -54,6 +55,8 @@ function App() {
 
       {/* Success messages, shown on top of every screen */}
       <ToastList />
+      {/* Shows a message passed along with a page change (for example after log in) */}
+      <NavigationToast />
     </BrowserRouter>
   )
 }

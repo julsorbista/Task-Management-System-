@@ -65,6 +65,20 @@ export function isOverdue(task) {
   return task.status !== 'done' && task.dueDate !== '' && task.dueDate < todayString()
 }
 
+// Get an id as a string from a full object ({ _id } or { id }) or a plain id
+export function getId(value) {
+  if (!value) return ''
+  if (typeof value === 'object') return String(value._id || value.id || '')
+  return String(value)
+}
+
+// True when the task's assignee is the logged-in user
+export function isAssignedToMe(task, currentUser) {
+  const assigneeId = getId(task.assignee)
+  const userId = getId(currentUser)
+  return assigneeId !== '' && userId !== '' && assigneeId === userId
+}
+
 // "Maya Reyes" -> "MR"
 export function getInitials(name) {
   if (!name) return '?'

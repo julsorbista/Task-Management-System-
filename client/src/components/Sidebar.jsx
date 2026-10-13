@@ -40,14 +40,23 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
   const sharedPages = pages.filter((page) => page.type === 'shared')
 
   // ---------- Search ----------
-  // Find tasks whose title or description contains the typed text
+  // Find pages whose name, and tasks whose title or description, contains the typed text
   const query = searchText.trim().toLowerCase()
+  let pageResults = []
   let searchResults = []
   if (query !== '') {
+    pageResults = pages.filter((page) => page.name.toLowerCase().includes(query))
     searchResults = tasks.filter((task) => {
       const text = (task.title + ' ' + task.description).toLowerCase()
       return text.includes(query)
     })
+  }
+
+  // Open the page that was clicked in the search results
+  function openPageResult(page) {
+    setSearchText('')
+    onNavigate()
+    navigate('/pages/' + page._id + '/list')
   }
 
   // Open the task that was clicked in the search results
@@ -145,7 +154,8 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
   async function handleLogout() {
     setIsConfirmingLogout(false)
     await logout()
-    navigate('/login')
+    // The log in screen shows this message once (see NavigationToast)
+    navigate('/login', { state: { toast: "You've been logged out." } })
   }
 
   // How many tasks on a page are not done yet (shown next to the page name)
@@ -194,7 +204,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
           </Link>
           {page.owner === user._id && <MoreMenu
             label="Page options"
-            buttonClass="sidebar-page-more"
+            buttonClass="sidebar-btn sidebar-page-more"
             items={[
               { label: 'Rename', onClick: () => startRenaming(page) },
               { label: 'Delete', onClick: () => setPageToDelete(page), isDanger: true },
@@ -238,7 +248,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
           <Icon name="logo" />
           Morrow
         </div>
-        <button type="button" className="icon-btn" aria-label="Close sidebar" title="Close sidebar" onClick={onClose}>
+        <button type="button" className="icon-btn sidebar-btn" aria-label="Close sidebar" title="Close sidebar" onClick={onClose}>
           <Icon name="sidebar" />
         </button>
       </div>
@@ -247,13 +257,13 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
       <div className="sidebar-search">
         <Icon name="search" />
         <label className="visually-hidden" htmlFor="sidebar-search">
-          Search tasks
+          Search pages and tasks
         </label>
         <input
           id="sidebar-search"
           type="search"
           className="input"
-          placeholder="Search tasks"
+          placeholder="Search pages and tasks"
           autoComplete="off"
           value={searchText}
           onChange={(event) => setSearchText(event.target.value)}
@@ -262,16 +272,27 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
         {/* Results appear as you type */}
         {query !== '' && (
           <div className="sidebar-results">
+            {pageResults.length > 0 && <div className="sidebar-results-heading">Pages</div>}
+            {pageResults.slice(0, 5).map((page) => (
+              <button type="button" className="sidebar-result sidebar-result-page" key={page._id} onClick={() => openPageResult(page)}>
+                <Icon name="document" />
+                <span className="sidebar-result-text">
+                  <span className="one-line sidebar-result-title">{page.name}</span>
+                  <span className="one-line small-text">{page.type === 'shared' ? 'Shared' : 'Private'}</span>
+                </span>
+              </button>
+            ))}
+            {searchResults.length > 0 && <div className="sidebar-results-heading">Tasks</div>}
             {searchResults.slice(0, 8).map((task) => (
               <button type="button" className="sidebar-result" key={task._id} onClick={() => openSearchResult(task)}>
                 <div className="one-line sidebar-result-title">{task.title}</div>
                 <div className="one-line small-text">{describeResult(task)}</div>
               </button>
             ))}
-            {searchResults.length === 0 && (
+            {pageResults.length === 0 && searchResults.length === 0 && (
               <div className="empty-state sidebar-no-results">
                 <strong>No results</strong>
-                No task title or description matches &quot;{searchText}&quot;.
+                No pages or tasks match &quot;{searchText.trim()}&quot;.
               </div>
             )}
           </div>
@@ -300,7 +321,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
         Private
         <button
           type="button"
-          className="icon-btn sidebar-add"
+          className="icon-btn sidebar-btn sidebar-add"
           aria-label="Add a private page"
           title="Add a private page"
           onClick={() => startAdding('private')}
@@ -317,7 +338,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
         Shared
         <button
           type="button"
-          className="icon-btn sidebar-add"
+          className="icon-btn sidebar-btn sidebar-add"
           aria-label="Add a shared page"
           title="Add a shared page"
           onClick={() => startAdding('shared')}
@@ -341,7 +362,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
         </Link>
         <button
           type="button"
-          className="icon-btn"
+          className="icon-btn sidebar-btn sidebar-logout"
           aria-label="Log out"
           title="Log out"
           onClick={() => setIsConfirmingLogout(true)}

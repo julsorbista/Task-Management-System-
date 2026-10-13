@@ -1,8 +1,7 @@
 // api.js
 // EVERY data function of the app lives in this file.
 //
-// Auth, boards, tasks, and notifications use the backend.
-// Some remaining account operations still use mock data.
+// Auth, accounts, boards, tasks, and notifications use the backend.
 //
 // FOR THE BACKEND DEVELOPER:
 // Each function is "async" and returns the same shape a real API would.
@@ -15,23 +14,9 @@
 //
 // The pages only call these functions, so nothing else needs to change.
 
-import { mockUsers, mockPages, mockTasks } from '../data/mockData.js'
 import { clearWorkspaceSnapshot, workspaceSnapshot, publishWorkspaceChange } from '../utils/workspaceSnapshot.js'
 
-// ---------- The fake database (kept in memory) ----------
-let users = makeCopy(mockUsers)
-let pages = makeCopy(mockPages)
-let tasks = makeCopy(mockTasks)
-
-// The logged-in user's id is saved in the browser so a refresh keeps you logged in
-let currentUserId = localStorage.getItem('morrow-user-id') || ''
-
 // ---------- Small helpers used only inside this file ----------
-
-// Make a full copy, so pages can never change the "database" by accident
-function makeCopy(value) {
-  return JSON.parse(JSON.stringify(value))
-}
 
 async function apiRequest(path, options = {}) {
   const response = await fetch(path, {
@@ -70,7 +55,6 @@ export async function verifyLoginOtp(challengeId, otp) {
     body: JSON.stringify({ challengeId, otp }),
   })
   if (data.user?._id) {
-    currentUserId = data.user._id
     localStorage.setItem('morrow-user-id', data.user._id)
   }
   return data.user
@@ -90,7 +74,6 @@ export async function register(name, username, email, password) {
 export async function logout() {
   await apiRequest('/api/auth/logout', { method: 'POST', body: '{}' })
   clearWorkspaceSnapshot()
-  currentUserId = ''
   localStorage.removeItem('morrow-user-id')
 }
 
@@ -184,17 +167,30 @@ export async function changePassword(currentPassword, newPassword, confirmPasswo
   return data
 }
 
-// Delete the logged-in user's account, the pages they own and those pages' tasks
+// Delete the logged-in user's account. The server also deletes the pages they own
+// and those pages' tasks. The login cookie is sent along with the request.
 export async function deleteAccount() {
-  const ownedPageIds = pages.filter((p) => p.owner === currentUserId).map((p) => p._id)
-  tasks = tasks.filter((t) => !ownedPageIds.includes(t.page))
-  pages = pages.filter((p) => p.owner !== currentUserId)
-  // Also leave the shared pages owned by other people
-  pages.forEach((p) => {
-    p.members = p.members.filter((m) => m.user !== currentUserId)
+  const url = '/api/users/me'
+  const response = await fetch(url, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    body: '{}', // the server only accepts write requests that send JSON
   })
-  users = users.filter((u) => u._id !== currentUserId)
-  await logout()
+
+  // Success is "204 No Content", so there is no JSON to read
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    const message = data.message || 'Could not delete your account.'
+    // Details for the backend developer, in the browser console
+    console.error('Delete account failed: DELETE ' + url + ' -> ' + response.status + ' ' + message)
+    throw new Error(message)
+  }
+
+  // Clear the saved login: the cookie (through log out), the saved id and the cached data
+  await logout().catch(() => {})
+  clearWorkspaceSnapshot()
+  localStorage.removeItem('morrow-user-id')
 }
 
 // =====================================================

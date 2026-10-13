@@ -14,6 +14,7 @@ export function connectToastList(addFunction) {
   addToast = addFunction
 }
 
-export function showToast(text) {
-  if (addToast) addToast(text)
+// type is 'success' (green, the default) or 'error' (red)
+export function showToast(text, type = 'success') {
+  if (addToast) addToast(text, type)
 }

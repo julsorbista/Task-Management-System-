@@ -101,6 +101,12 @@
   color: var(--on-accent);
 }
 
+/* Assigned to someone else on a shared page: grayed out, not clickable */
+.task-check.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .task-check .icon {
   width: 12px;
   height: 12px;

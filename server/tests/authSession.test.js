@@ -62,6 +62,11 @@ test('register → OTP → MongoDB current-user stays authenticated; invalid/rep
     const value = savedUser && String(savedUser._id) === String(id) ? savedUser : null
     return { select: async () => value, then: (resolve, reject) => Promise.resolve(value).then(resolve, reject) }
   })
+  stub(User, 'findByIdAndUpdate', async (id, update) => {
+    if (!savedUser || String(savedUser._id) !== String(id)) return null
+    savedUser.firstLoginVerifiedAt = update.$set.firstLoginVerifiedAt
+    return savedUser
+  })
   stub(mailer, 'sendLoginOtpEmail', async ({ otp }) => { deliveredOtp = otp; return { sent: true } })
   const app = express()
   app.use(express.json())
@@ -110,6 +115,14 @@ test('register → OTP → MongoDB current-user stays authenticated; invalid/rep
   response = await post('/api/auth/logout', {}, cookie)
   assert.equal(response.status, 200)
   assert(response.headers.get('set-cookie').includes('access_token=;'))
+  deliveredOtp = null
+  response = await post('/api/auth/login', { identifier: 'testuser', password: 'ExamplePassword123' })
+  assert.equal(response.status, 200)
+  assert.equal((await response.json()).otpRequired, false)
+  assert(response.headers.get('set-cookie').includes('access_token='))
+  assert.equal(deliveredOtp, null)
+  response = await post('/api/auth/login', { identifier: 'testuser', password: 'wrongpassword' })
+  assert.equal(response.status, 401)
   savedUser = null
   response = await fetch(base + '/api/users/me', { headers: { Cookie: cookie } })
   assert.equal(response.status, 401)

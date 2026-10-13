@@ -67,6 +67,11 @@ router.post('/login', async (req, res, next) => {
       return res.status(401).json({ message: 'Incorrect username/email or password.' })
     }
 
+    if (user.firstLoginVerifiedAt) {
+      setAuthCookie(res, user._id)
+      return res.json({ otpRequired: false, user: hidePassword(user) })
+    }
+
     const challenge = await createOtpChallenge(String(user._id))
     let emailResult
     try {
@@ -98,7 +103,9 @@ router.post('/login/verify-otp', async (req, res, next) => {
     return res.status(401).json({ message })
   }
 
-    const user = await User.findById(result.userId)
+    const user = await User.findByIdAndUpdate(result.userId, {
+      $set: { firstLoginVerifiedAt: new Date() },
+    }, { new: true, runValidators: true })
     if (!user) {
       return res.status(401).json({ message: 'Account not found.' })
     }

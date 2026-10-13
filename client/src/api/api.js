@@ -61,6 +61,7 @@ async function apiRequest(path, options = {}) {
 
 // Start login. Throws an error when the username/email or password is wrong.
 export async function login(identifier, password) {
+  clearWorkspaceSnapshot()
   return apiRequest('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({ identifier, password }),

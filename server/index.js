@@ -43,6 +43,7 @@ app.use('/api', async (req, res, next) => {
 })
 
 app.use('/api/auth', authRoutes)
+app.use('/api/invitations', require('./routes/invitationRoutes'))
 app.use('/api/profile', profileRoutes)
 app.use('/api/boards', boardRoutes)
 app.use('/api/boards/:boardId/tasks', taskRoutes)

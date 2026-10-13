@@ -8,38 +8,39 @@ import Layout from '../components/Layout.jsx'
 import Icon from '../components/Icon.jsx'
 import ConfirmDelete from '../components/ConfirmDelete.jsx'
 import { showToast } from '../utils/toast.js'
-import { getCurrentUser, updateProfile, changePassword, deleteAccount, logout } from '../api/api.js'
+import { getCurrentUser, updateProfile, changePassword, deleteAccount } from '../api/api.js'
 import { getInitials, isValidEmail, isValidPassword, isValidUsername } from '../utils/helpers.js'
 import './Profile.css'
+import { workspaceSnapshot } from '../utils/workspaceSnapshot.js'
 
 function Profile() {
   const navigate = useNavigate()
 
   // Profile fields
-  const [name, setName] = useState('')
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
-  const [photo, setPhoto] = useState('')
+  const [name, setName] = useState(workspaceSnapshot.user?.name || '')
+  const [username, setUsername] = useState(workspaceSnapshot.user?.username || '')
+  const [email, setEmail] = useState(workspaceSnapshot.user?.email || '')
+  const [photo, setPhoto] = useState(workspaceSnapshot.user?.photo || '')
   const [newPhoto, setNewPhoto] = useState('') // picked but not saved yet ('' = none)
   const [profileErrors, setProfileErrors] = useState({})
 
   // The name and email as last saved. The "Save changes" button
   // only shows when the fields are different from these.
-  const [savedName, setSavedName] = useState('')
-  const [savedUsername, setSavedUsername] = useState('')
-  const [savedEmail, setSavedEmail] = useState('')
+  const [savedName, setSavedName] = useState(workspaceSnapshot.user?.name || '')
+  const [savedUsername, setSavedUsername] = useState(workspaceSnapshot.user?.username || '')
+  const [savedEmail, setSavedEmail] = useState(workspaceSnapshot.user?.email || '')
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordErrors, setPasswordErrors] = useState({})
+  const [isSavingPassword, setIsSavingPassword] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
-  const [isConfirmingLogout, setIsConfirmingLogout] = useState(false)
   const [isConfirmingRemovePhoto, setIsConfirmingRemovePhoto] = useState(false)
 
   // Goes up after a save, so the sidebar shows the new name and photo
@@ -130,6 +131,7 @@ function Profile() {
 
   // ---------- Password ----------
   async function handleSavePassword() {
+    if (isSavingPassword) return
     const newErrors = {}
     if (currentPassword === '') newErrors.currentPassword = 'Enter your current password.'
     if (newPassword === '') newErrors.newPassword = 'Enter your new password.'
@@ -140,28 +142,26 @@ function Profile() {
     setPasswordErrors(newErrors)
     if (Object.keys(newErrors).length > 0) return
 
+    setIsSavingPassword(true)
     try {
-      await changePassword(currentPassword, newPassword)
+      await changePassword(currentPassword, newPassword, confirmPassword)
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
       showToast('Password changed')
     } catch (error) {
-      setPasswordErrors({ currentPassword: error.message })
+      setPasswordErrors(error.errors || { currentPassword: error.message })
+    } finally {
+      setIsSavingPassword(false)
     }
   }
 
-  // ---------- Delete account and log out ----------
+  // ---------- Delete account ----------
   async function handleDeleteAccount() {
     await deleteAccount()
     navigate('/login')
   }
 
-  async function handleLogout() {
-    setIsConfirmingLogout(false)
-    await logout()
-    navigate('/login')
-  }
 
   return (
     <Layout reloadSignal={savedCount}>
@@ -318,8 +318,8 @@ function Profile() {
           </div>
 
           <div className="row">
-            <button type="button" className="btn" onClick={handleSavePassword}>
-              Update password
+            <button type="button" className="btn" disabled={isSavingPassword} onClick={handleSavePassword}>
+              {isSavingPassword ? 'Saving…' : 'Update password'}
             </button>
           </div>
         </div>
@@ -335,12 +335,6 @@ function Profile() {
           </button>
         </div>
 
-        {/* Log out */}
-        <div className="profile-logout">
-          <button type="button" className="btn" onClick={() => setIsConfirmingLogout(true)}>
-            Log out
-          </button>
-        </div>
       </div>
 
       {isConfirmingDelete && (
@@ -353,15 +347,6 @@ function Profile() {
         />
       )}
 
-      {isConfirmingLogout && (
-        <ConfirmDelete
-          title="Log out of Morrow?"
-          message="You can log back in anytime."
-          confirmLabel="Log out"
-          onConfirm={handleLogout}
-          onCancel={() => setIsConfirmingLogout(false)}
-        />
-      )}
 
       {isConfirmingRemovePhoto && (
         <ConfirmDelete

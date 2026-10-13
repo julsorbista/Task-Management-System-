@@ -4,9 +4,11 @@
 //   - a three-dot button after Priority with Edit and Delete
 //   - clicking a task opens the task form
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import useBoardData from '../utils/useBoardData.js'
 import { useParams, useSearchParams } from 'react-router-dom'
 import Layout from '../components/Layout.jsx'
+import WorkspacePlaceholder from '../components/WorkspacePlaceholder.jsx'
 import TaskHeader from '../components/TaskHeader.jsx'
 import TaskForm from '../components/TaskForm.jsx'
 import MoreMenu from '../components/MoreMenu.jsx'
@@ -14,7 +16,7 @@ import ConfirmDelete from '../components/ConfirmDelete.jsx'
 import ShareModal from '../components/ShareModal.jsx'
 import { showToast } from '../utils/toast.js'
 import Icon from '../components/Icon.jsx'
-import { getPage, getTasksByPage, getUsers, getCurrentUser, createTask, updateTask, deleteTask } from '../api/api.js'
+import { createTask, updateTask, deleteTask } from '../api/api.js'
 import {
   DEFAULT_FILTERS,
   PRIORITY_LABELS,
@@ -34,13 +36,14 @@ function TaskList() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Data
-  const [page, setPage] = useState(null)
-  const [tasks, setTasks] = useState([])
-  const [users, setUsers] = useState([])
-  const [currentUser, setCurrentUser] = useState(null)
-  const [hasLoaded, setHasLoaded] = useState(false)
-  const [loadError, setLoadError] = useState('')
-  const [reloadCount, setReloadCount] = useState(0) // add 1 to load the data again
+  const [reloadCount, setReloadCount] = useState(0)
+  const { page, tasks, users, currentUser, setTasks, hasLoaded, loadError } = useBoardData(pageId, reloadCount)
+  const [savingTaskIds, setSavingTaskIds] = useState([])
+  const canEditTasks = Boolean(currentUser && page && (
+    page.owner === currentUser._id ||
+    page.members?.some((member) => member.user === currentUser._id && member.role === 'editor')
+  ))
+
 
   // Filter and sort choices
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
@@ -61,32 +64,8 @@ function TaskList() {
   const [isShareOpen, setIsShareOpen] = useState(false)
 
   // Load the page, its tasks and the users
-  useEffect(() => {
-    let active = true
-    setHasLoaded(false)
-    setLoadError('')
-    async function loadData() {
-      try {
-        const [board, boardTasks, allUsers, user] = await Promise.all([
-          getPage(pageId), getTasksByPage(pageId), getUsers(), getCurrentUser(),
-        ])
-        if (!active) return
-        setPage(board)
-        setTasks(boardTasks)
-        setUsers(allUsers)
-        setCurrentUser(user)
-      } catch (error) {
-        if (active) setLoadError(error.message || 'Failed to load tasks.')
-      } finally {
-        if (active) setHasLoaded(true)
-      }
-    }
-    loadData()
-    return () => { active = false }
-  }, [pageId, reloadCount])
-
   function reloadData() {
-    setReloadCount(reloadCount + 1)
+    setReloadCount((count) => count + 1)
   }
 
   // ---------- Create ----------
@@ -101,7 +80,8 @@ function TaskList() {
     newTask.dueDate = newDueDate
     newTask.priority = newPriority
     const savedTask = await createTask(newTask)
-    setAddedIds([...addedIds, savedTask._id])
+    setTasks((items) => [...items, savedTask])
+    setAddedIds((ids) => [...ids, savedTask._id])
 
     // Empty the row and keep the cursor in the field for the next task
     setNewTitle('')
@@ -109,7 +89,6 @@ function TaskList() {
     setNewPriority('medium')
     document.getElementById('new-task-title').focus()
     showToast('Task added')
-    reloadData()
   }
 
   // Open the full form, keeping what was typed in the inline row
@@ -128,22 +107,37 @@ function TaskList() {
   // Save the task form (works for both a new task and an edited one)
   async function handleSaveTask(taskData) {
     if (taskData._id) {
-      await updateTask(pageId, taskData._id, taskData)
+      const savedTask = await updateTask(pageId, taskData._id, taskData)
+      setTasks((items) => items.map((item) => item._id === savedTask._id ? savedTask : item))
       showToast('Task updated')
     } else {
-      await createTask(taskData)
+      const savedTask = await createTask(taskData)
+      setTasks((items) => [...items, savedTask])
+      setAddedIds((ids) => [...ids, savedTask._id])
       showToast('Task added')
     }
     closeForm()
-    reloadData()
   }
 
   // The checkbox: switch between done and to do
   async function handleToggleDone(task) {
+    if (savingTaskIds.includes(task._id)) return
     const newStatus = task.status === 'done' ? 'todo' : 'done'
-    await updateTask(pageId, task._id, { status: newStatus })
-    showToast('Task updated')
-    reloadData()
+    setSavingTaskIds((ids) => [...ids, task._id])
+    setTasks((items) => items.map((item) => item._id === task._id
+      ? { ...item, status: newStatus, completedAt: newStatus === 'done' ? new Date().toISOString() : '' }
+      : item))
+    try {
+      await updateTask(pageId, task._id, { status: newStatus })
+      showToast('Task updated')
+    } catch (error) {
+      setTasks((items) => items.map((item) => item._id === task._id
+        ? { ...item, status: task.status, completedAt: task.completedAt }
+        : item))
+      showToast(error.message || 'Could not update task completion.')
+    } finally {
+      setSavingTaskIds((ids) => ids.filter((id) => id !== task._id))
+    }
   }
 
   function closeForm() {
@@ -154,13 +148,13 @@ function TaskList() {
   // ---------- Delete ----------
   async function handleConfirmDelete() {
     await deleteTask(pageId, taskToDelete._id)
+    setTasks((items) => items.filter((item) => item._id !== taskToDelete._id))
     setTaskToDelete(null)
     showToast('Task deleted')
-    reloadData()
   }
 
   // ---------- What to show ----------
-  if (!hasLoaded) return <Layout><p role="status">Loading tasks…</p></Layout>
+  if (!hasLoaded) return <Layout><WorkspacePlaceholder pageId={pageId} /></Layout>
   if (loadError) return <Layout><p role="alert" className="error-text">{loadError}</p></Layout>
 
   if (!page) {
@@ -221,6 +215,9 @@ function TaskList() {
                   type="button"
                   className={isDone ? 'task-check checked' : 'task-check'}
                   aria-label={isDone ? 'Mark as not done' : 'Mark as done'}
+                  title="Update task completion"
+                  disabled={savingTaskIds.includes(task._id)}
+                  aria-busy={savingTaskIds.includes(task._id)}
                   onClick={() => handleToggleDone(task)}
                 >
                   <span>
@@ -251,20 +248,20 @@ function TaskList() {
                 </span>
 
                 {/* Three-dot button right after Priority */}
-                <MoreMenu
+                {canEditTasks && <MoreMenu
                   label="More actions"
                   buttonClass="task-more"
                   items={[
                     { label: 'Edit', onClick: () => setFormTask(task) },
                     { label: 'Delete', onClick: () => setTaskToDelete(task), isDanger: true },
                   ]}
-                />
+                />}
               </div>
             )
           })}
 
           {/* Inline "add task" row, below the last task */}
-          <div className={rowClass}>
+          <div className={rowClass} style={{ display: canEditTasks ? undefined : 'none' }}>
             <span className="task-add-icon">
               <Icon name="plus" />
             </span>
@@ -336,7 +333,7 @@ function TaskList() {
 
       {/* Pop-up windows */}
       {taskInForm && (
-        <TaskForm
+        <TaskForm readOnly={!canEditTasks}
           key={taskInForm._id || 'new'}
           task={taskInForm}
           page={page}

@@ -1,12 +1,14 @@
 
 const mongoose = require('mongoose')
 const Notification = require('../models/Notification')
+const repairLegacyNotifications = require('../utils/repairLegacyNotifications')
 
 async function getNotifications(req, res, next) {
   try {
     const notifications = await Notification.find({
       user: req.user.id,
     }).sort({ createdAt: -1 })
+    await repairLegacyNotifications(notifications, req.user.id)
 
     res.status(200).json({
       notifications,

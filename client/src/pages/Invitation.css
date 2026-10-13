@@ -1,0 +1,23 @@
+.invitation-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.invitation-actions .btn {
+  min-height: 42px;
+  padding: 10px 12px;
+  justify-content: center;
+  text-align: center;
+}
+
+.invitation-actions-single {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 480px) {
+  .invitation-actions {
+    grid-template-columns: 1fr;
+  }
+}

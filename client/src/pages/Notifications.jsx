@@ -17,6 +17,8 @@ import {
   clearReadNotifications,
 } from '../api/api.js'
 import './Notifications.css'
+import { workspaceSnapshot } from '../utils/workspaceSnapshot.js'
+import { notificationDestination } from '../utils/notificationDestination.js'
 
 // Which icon to show for each type of notification
 const TYPE_ICONS = { 'due-soon': 'clock', overdue: 'alert', assigned: 'user', shared: 'users' }
@@ -24,27 +26,32 @@ const TYPE_ICONS = { 'due-soon': 'clock', overdue: 'alert', assigned: 'user', sh
 function Notifications() {
   const navigate = useNavigate()
 
-  const [notifications, setNotifications] = useState([])
-  const [tasks, setTasks] = useState([])
-  const [pages, setPages] = useState([])
-  const [reloadCount, setReloadCount] = useState(0)
+  const [notifications, setNotifications] = useState(workspaceSnapshot.notifications)
+  const [tasks, setTasks] = useState(workspaceSnapshot.tasks)
+  const [pages, setPages] = useState(workspaceSnapshot.pages)
+  const [openError, setOpenError] = useState('')
 
   // 'all' or 'unread'
   const [filter, setFilter] = useState('all')
   const [isConfirmingClear, setIsConfirmingClear] = useState(false)
 
   useEffect(() => {
+    let active = true
     async function loadData() {
-      setNotifications(await getNotifications())
-      setTasks(await getTasks())
-      setPages(await getPages())
+      try {
+        const [loadedNotifications, loadedPages] = await Promise.all([getNotifications(), getPages()])
+        if (!active) return
+        setNotifications(loadedNotifications)
+        setPages(loadedPages)
+        const loadedTasks = await getTasks(loadedPages)
+        if (active) setTasks(loadedTasks)
+      } catch (error) {
+        if (active) setOpenError(error.message || 'Could not load notifications.')
+      }
     }
     loadData()
-  }, [reloadCount])
-
-  function reloadData() {
-    setReloadCount(reloadCount + 1)
-  }
+    return () => { active = false }
+  }, [])
 
   // Name of the task or page a notification is about
   function getRelatedName(notification) {
@@ -57,11 +64,18 @@ function Notifications() {
 
   // Clicking a notification marks it as read and opens the related task (or page)
   async function handleOpen(notification) {
-    await setNotificationRead(notification._id, true)
-    const task = tasks.find((t) => t._id === notification.task)
-    if (task) navigate('/pages/' + task.page + '/list?task=' + task._id)
-    else if (pages.some((p) => p._id === notification.page)) navigate('/pages/' + notification.page + '/list')
-    else reloadData()
+    setOpenError('')
+    const destination = notificationDestination(notification, tasks)
+    if (!destination) {
+      setOpenError('The related task or board could not be identified. It may have been deleted, renamed, or have a duplicate name.')
+      return
+    }
+    navigate(destination)
+    try {
+      await setNotificationRead(notification._id, true)
+    } catch (error) {
+      showToast(error.message || 'Could not mark the notification as read.')
+    }
   }
 
   // "Mark as read" on one notification (read ones cannot be marked unread again)
@@ -78,21 +92,17 @@ function Notifications() {
     try {
       await markAllNotificationsRead()
       showToast('Notifications marked as read')
-      reloadData()
+      setNotifications((items) => items.map((item) => ({ ...item, isRead: true })))
     } catch (error) {
       showToast(error.message || 'Failed to mark notifications as read')
     }
   }
 
   async function handleClearRead() {
-    try {
-      await clearReadNotifications()
-      setIsConfirmingClear(false)
-      showToast('Read notifications cleared')
-      reloadData()
-    } catch (error) {
-      showToast(error.message || 'Failed to clear read notifications')
-    }
+    await clearReadNotifications()
+    setIsConfirmingClear(false)
+    showToast('Read notifications cleared')
+    setNotifications((items) => items.filter((item) => !item.isRead))
   }
 
   const visibleNotifications = notifications.filter((n) => filter === 'all' || !n.isRead)
@@ -133,6 +143,7 @@ function Notifications() {
         </div>
 
         {/* The list */}
+        {openError && <p className="error-text" role="alert">{openError}</p>}
         {visibleNotifications.length > 0 && (
           <div className="notifications-list">
             {visibleNotifications.map((notification) => (

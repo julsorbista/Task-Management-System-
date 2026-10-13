@@ -10,22 +10,36 @@
 //   onConfirm     runs when the user confirms
 //   onCancel      runs when the user cancels
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import './ConfirmDelete.css'
 
 function ConfirmDelete({ title, message, confirmLabel, onConfirm, onCancel }) {
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [error, setError] = useState('')
+  async function handleConfirm() {
+    if (isDeleting) return
+    setIsDeleting(true)
+    setError('')
+    try {
+      await onConfirm()
+    } catch (failure) {
+      setError(failure.message || 'Could not delete. Please try again.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
   // Escape key cancels
   useEffect(() => {
     function handleKeyDown(event) {
-      if (event.key === 'Escape') onCancel()
+      if (event.key === 'Escape' && !isDeleting) onCancel()
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onCancel])
+  }, [onCancel, isDeleting])
 
   // A click on the dimmed background (not on the box itself) cancels
   function handleBackgroundClick(event) {
-    if (event.target === event.currentTarget) onCancel()
+    if (event.target === event.currentTarget && !isDeleting) onCancel()
   }
 
   return (
@@ -33,12 +47,13 @@ function ConfirmDelete({ title, message, confirmLabel, onConfirm, onCancel }) {
       <div className="modal modal-small" role="alertdialog" aria-label={title}>
         <h2 className="modal-title">{title}</h2>
         {message && <p className="muted confirm-message">{message}</p>}
+        {error && <p role="alert" className="error-text">{error}</p>}
         <div className="modal-footer">
-          <button type="button" className="btn" onClick={onCancel}>
+          <button type="button" disabled={isDeleting} className="btn" onClick={onCancel}>
             Cancel
           </button>
-          <button type="button" className="btn btn-danger" onClick={onConfirm}>
-            {confirmLabel || 'Delete'}
+          <button type="button" disabled={isDeleting} className="btn btn-danger" onClick={handleConfirm}>
+            {isDeleting ? 'Please wait…' : confirmLabel || 'Delete'}
           </button>
         </div>
       </div>

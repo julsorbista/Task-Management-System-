@@ -42,6 +42,7 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    lastOtpSentAt: { type: Date, default: null },
   },
   {
     timestamps: true,

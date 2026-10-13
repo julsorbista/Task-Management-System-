@@ -15,6 +15,8 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('editor')
   const [inviteError, setInviteError] = useState('')
+  const [isInviting, setIsInviting] = useState(false)
+  const [newInvitations, setNewInvitations] = useState([])
   const [message, setMessage] = useState('') // small text when copying fails
   const [memberToRemove, setMemberToRemove] = useState(null)
 
@@ -24,6 +26,7 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
 
   // Invite a person by email
   async function handleInvite() {
+    if (isInviting) return
     if (inviteEmail.trim() === '') {
       setInviteError('Enter an email address.')
       return
@@ -36,14 +39,18 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
       setInviteError('Board ID is missing. Refresh the page and try again.')
       return
     }
+    setIsInviting(true)
     try {
-      await inviteMember(boardId, inviteEmail, inviteRole)
-      showToast('Member invited')
+      const result = await inviteMember(boardId, inviteEmail, inviteRole)
+      setNewInvitations((items) => [...items, result.invitation])
+      showToast('Invitation email sent')
       setInviteEmail('')
       setInviteError('')
       onChanged() // the page reloads its data
     } catch (error) {
       setInviteError(error.message)
+    } finally {
+      setIsInviting(false)
     }
   }
 
@@ -95,6 +102,7 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
             <label className="label" htmlFor="share-email">
               Invite by email
             </label>
+            <p className="small-text">Invite someone who already has a Morrow account.</p>
             <div className="share-line">
               <input
                 id="share-email"
@@ -116,8 +124,8 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
                 <option value="editor">Editor</option>
                 <option value="viewer">Viewer</option>
               </select>
-              <button type="button" className="btn btn-primary" onClick={handleInvite}>
-                Invite
+              <button type="button" className="btn btn-primary" disabled={isInviting} onClick={handleInvite}>
+                {isInviting ? 'Sending invitation…' : 'Invite'}
               </button>
             </div>
             {inviteError && <div className="error-text">{inviteError}</div>}
@@ -141,11 +149,22 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
 
         {message && <p className="small-text">{message}</p>}
 
+        {isOwner && <>
+          <span className="label share-people-label">Pending invitations</span>
+          {[...(page.invitations || []), ...newInvitations.filter((item) => !(page.invitations || []).some((existing) => existing._id === item._id))].map((invitation) => (
+            <div className="share-member" key={invitation._id}>
+              <span className="share-member-name">{invitation.email}</span>
+              <span className="small-text">{invitation.role} · Pending</span>
+            </div>
+          ))}
+          <p className="small-text">Access starts after the recipient accepts the email invitation.</p>
+        </>}
+
         {/* People with access */}
         <span className="label share-people-label">
           People with access
         </span>
-        {page.members.map((member) => {
+        {(page.members || []).map((member) => {
           const user = users.find((u) => u._id === member.user)
           if (!user) return null
           const isThisTheOwner = member.role === 'owner'

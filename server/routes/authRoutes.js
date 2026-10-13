@@ -3,6 +3,7 @@ const express = require('express')
 
 
 const User = require('../models/User')
+const OtpChallenge = require('../models/OtpChallenge')
 const { createUser, hidePassword } = require('../models/userStore')
 const { verifyPassword } = require('../utils/password')
 const { clearAuthCookie, setAuthCookie } = require('../utils/authCookie')
@@ -72,6 +73,13 @@ router.post('/login', async (req, res, next) => {
       return res.json({ otpRequired: false, user: hidePassword(user) })
     }
 
+    // Reserve the cooldown in MongoDB, shared by every deployed instance.
+    const reserved = await User.findOneAndUpdate({
+      _id: user._id,
+      $or: [{ lastOtpSentAt: null }, { lastOtpSentAt: { $lte: new Date(Date.now() - 60000) } }],
+    }, { $set: { lastOtpSentAt: new Date() } }, { new: true })
+    if (!reserved) return res.status(429).json({ message: 'Wait 60 seconds before requesting another OTP.' })
+    await OtpChallenge.deleteMany({ user: user._id })
     const challenge = await createOtpChallenge(String(user._id))
     let emailResult
     try {

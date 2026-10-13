@@ -30,7 +30,7 @@ function TaskHeader({ page, users, filters, onFiltersChange, onShareClick }) {
         {isShared && (
           <div className="row">
             <div className="task-header-avatars">
-              {page.members.map((member) => {
+              {(page.members || []).map((member) => {
                 const user = users.find((u) => u._id === member.user)
                 if (!user) return null
                 return (

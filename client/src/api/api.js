@@ -172,13 +172,19 @@ export async function updateProfile(changes) {
 }
 
 // Change the password. Throws an error when the current password is wrong.
-export async function changePassword(currentPassword, newPassword) {
-  const user = users.find((u) => u._id === currentUserId)
-  if (user.password !== currentPassword) {
-    throw new Error('Current password is incorrect.')
+export async function changePassword(currentPassword, newPassword, confirmPassword) {
+  const response = await fetch('/api/users/me/password', {
+    method: 'PATCH', credentials: 'include',
+    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    const error = new Error(data.message || 'Could not update password.')
+    error.errors = data.errors
+    throw error
   }
-  user.password = newPassword
-  return { message: 'Password updated.' }
+  return data
 }
 
 // Delete the logged-in user's account, the pages they own and those pages' tasks
@@ -254,6 +260,7 @@ export async function renamePage(pageId, newName) {
 export async function deletePage(pageId) {
   const response = await fetch(`/api/boards/${pageId}`, {
     method: 'DELETE',
+    body: '{}',
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
@@ -305,6 +312,7 @@ export async function updateMemberRole(pageId, userId, role) {
 export async function removeMember(pageId, userId) {
   const response = await fetch(`/api/boards/${pageId}/members/${userId}`, {
     method: 'DELETE',
+    body: '{}',
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
@@ -372,6 +380,7 @@ function formatNotification(notification) {
     user: notification.user ? String(notification.user) : '',
     task: notification.task ? String(notification.task) : '',
     page: notification.page ? String(notification.page) : '',
+    invitation: notification.invitation ? String(notification.invitation) : '',
     timeLabel: notificationTimeLabel(notification),
   }
 }
@@ -450,6 +459,7 @@ export async function deleteTask(pageId, taskId) {
       'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
     },
+    body: '{}',
   })
 
   if (!response.ok) {
@@ -511,6 +521,7 @@ export async function markAllNotificationsRead() {
 export async function clearReadNotifications() {
   const response = await fetch('/api/users/notifications/read', {
     method: 'DELETE',
+    body: '{}',
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',

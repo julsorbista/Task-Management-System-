@@ -3,7 +3,7 @@ const Task = require('../models/Task')
 const BoardMember = require('../models/BoardMember')
 const Notification = require('../models/Notification')
 
-// Match the field names expected by the existing frontend.
+                                                           
 function formatTask(task) {
   const data = task.toObject()
 
@@ -18,7 +18,7 @@ function formatTask(task) {
 }
 
 function todayString() {
-  // Use the same project timezone for completion dates.
+                                                        
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Asia/Manila',
     year: 'numeric',
@@ -115,7 +115,7 @@ async function validateAssignee(assignee, req, res) {
     assignee !== '' &&
     String(assignee) !== String(req.board.owner)
   ) {
-    // Private boards can only assign tasks to their owner.
+                                                           
     if (req.board.type !== 'shared') {
       res.status(400).json({
         message: 'Assignee must have access to this board.',
@@ -208,7 +208,7 @@ async function createTask(req, res, next) {
       completedAt: changes.status === 'done' ? todayString() : '',
     })
 
-    // Validate dates, times, status, and priority first.
+                                                         
     await task.validate()
 
     if (!validateTaskRules(task, res)) return
@@ -230,14 +230,10 @@ async function updateTask(req, res, next) {
   }
 
   const body = req.body || {}
-  // Viewers can only tick or untick a task (the checkbox).
-  // So the only fields they may send are status and completedAt.
-  const isViewer = req.boardRole === 'viewer'
-  const viewerFields = ['status', 'completedAt']
-  const sentFields = Object.keys(body)
-  const onlyStatus = body.status !== undefined && sentFields.every((field) => viewerFields.includes(field))
-  if (isViewer && !onlyStatus) {
-    return res.status(403).json({ message: 'You do not have permission for this action.' })
+                                                           
+                                                                 
+  if (!['owner', 'editor'].includes(req.boardRole)) {
+    return res.status(403).json({ message: 'Viewers cannot change tasks or task completion.' })
   }
   const changes = collectTaskChanges(body, res)
 
@@ -263,15 +259,8 @@ async function updateTask(req, res, next) {
       })
     }
 
-    // Viewers can only tick tasks that are unassigned or assigned to them.
-    // The assignee may be just an id or a full (populated) user, so compare both as strings.
-    if (isViewer && task.assignee) {
-      const assigneeId = String(task.assignee?._id ?? task.assignee)
-      const userId = String(req.user._id ?? req.user.id) // authenticate sets req.user.id
-      if (assigneeId !== userId) {
-        return res.status(403).json({ message: 'You do not have permission for this action.' })
-      }
-    }
+                                                                           
+                                                                                             
 
     const previousAssignee = task.assignee ? String(task.assignee) : ''
 

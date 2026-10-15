@@ -1,6 +1,3 @@
-// PasswordUpdated.jsx
-// Success message after resetting the password, with a link back to log in.
-
 import { Link } from 'react-router-dom'
 import AuthCard from '../components/AuthCard.jsx'
 

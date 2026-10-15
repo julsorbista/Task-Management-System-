@@ -1,8 +1,4 @@
-/* ConfirmDelete.css - the "are you sure?" pop-up.
-   The pop-up window itself (.overlay, .modal) is styled in index.css. */
 
-/* Sits above other pop-up windows, such as the Share window,
-   in the exact center of the screen */
 .confirm-overlay {
   z-index: 90;
   align-items: center;
@@ -12,7 +8,7 @@
   margin: 8px 0 24px;
 }
 
-/* Space above the buttons when there is no message line */
+
 .confirm-overlay .modal-footer {
   margin-top: 16px;
 }

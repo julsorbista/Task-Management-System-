@@ -1,4 +1,4 @@
-/* ViewSwitcher.css - three buttons joined in one box */
+
 
 .view-switcher {
   display: inline-flex;
@@ -22,7 +22,7 @@
   border-right: 0;
 }
 
-/* The view you are on */
+
 .view-switcher a.active {
   background: var(--tint);
   color: var(--accent);

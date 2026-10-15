@@ -1,6 +1,6 @@
-/* TaskBoard.css - the board view */
+                                    
 
-/* Three columns side by side */
+                                
 .board {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -22,7 +22,7 @@
   margin: 2px 2px 12px;
 }
 
-/* ---------- Card ---------- */
+                                
 .board-card {
   position: relative;
   border: 1px solid var(--line);
@@ -36,8 +36,8 @@
   border-color: var(--muted);
 }
 
-/* The title is a button. Its ::after layer covers the whole card,
-   so a click anywhere on the card opens the form. */
+                                                                  
+                                                     
 .board-card-open {
   display: block;
   width: 100%;
@@ -64,7 +64,7 @@
   font-weight: 400;
 }
 
-/* Bottom row of the card: priority, due date, avatar, delete */
+                                                                
 .board-card-info {
   display: flex;
   flex-wrap: wrap;
@@ -80,7 +80,7 @@
   margin-left: auto;
 }
 
-/* Red delete icon. z-index keeps it clickable above the card's click layer. */
+                                                                               
 .board-card-delete {
   position: relative;
   z-index: 1;
@@ -100,7 +100,7 @@
   color: var(--muted);
 }
 
-/* ---------- "+ Add task" ---------- */
+                                        
 .board-add {
   display: flex;
   align-items: center;
@@ -127,7 +127,7 @@
   margin-top: 8px;
 }
 
-/* Phones: the columns stack */
+                               
 @media (max-width: 760px) {
   .board {
     grid-template-columns: minmax(0, 1fr);

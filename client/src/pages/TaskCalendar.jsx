@@ -1,9 +1,3 @@
-// TaskCalendar.jsx
-// Calendar view: tasks placed on their due dates.
-//   - tasks with a due time show the time next to the title
-//   - clicking a task opens the task form
-//   - there is no delete here
-
 import { useState } from 'react'
 import useBoardData from '../utils/useBoardData.js'
 import { useParams } from 'react-router-dom'
@@ -23,8 +17,6 @@ const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 function TaskCalendar() {
   const { pageId } = useParams()
-
-  // Data
   const [reloadCount, setReloadCount] = useState(0)
   const { page, tasks, users, currentUser, setTasks, hasLoaded, loadError } = useBoardData(pageId, reloadCount)
   const canEditTasks = Boolean(currentUser && page && (
@@ -32,14 +24,9 @@ function TaskCalendar() {
     page.members?.some((member) => member.user === currentUser._id && member.role === 'editor')
   ))
 
-
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
-
-  // The month on screen. month is 0 for January, 11 for December.
   const [year, setYear] = useState(new Date().getFullYear())
   const [month, setMonth] = useState(new Date().getMonth())
-
-  // Pop-up windows
   const [formTask, setFormTask] = useState(null)
   const [isShareOpen, setIsShareOpen] = useState(false)
 
@@ -47,7 +34,6 @@ function TaskCalendar() {
     setReloadCount((count) => count + 1)
   }
 
-  // ---------- Month buttons ----------
   function goToPreviousMonth() {
     if (month === 0) {
       setMonth(11)
@@ -71,7 +57,7 @@ function TaskCalendar() {
     setMonth(new Date().getMonth())
   }
 
-  // ---------- Update ----------
+                                 
   async function handleSaveTask(taskData) {
     if (taskData._id) {
       const savedTask = await updateTask(pageId, taskData._id, taskData)
@@ -101,21 +87,15 @@ function TaskCalendar() {
 
   const visibleTasks = filterAndSortTasks(tasks, filters)
   const today = todayString()
-
-  // ---------- Build the days to draw ----------
-  // The grid starts on the Sunday before (or on) the 1st of the month
-  // and shows whole weeks: 35 days, or 42 when the month needs six rows.
   const firstOfMonth = new Date(year, month, 1)
   const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const daysBeforeFirst = firstOfMonth.getDay() // 0 = Sunday
+  const daysBeforeFirst = firstOfMonth.getDay()              
   const numberOfCells = daysBeforeFirst + daysInMonth > 35 ? 42 : 35
 
   const days = []
   for (let i = 0; i < numberOfCells; i++) {
     const date = new Date(year, month, 1 - daysBeforeFirst + i)
     const dateString = toDateString(date)
-
-    // Tasks due on this day, earliest time first
     const dayTasks = visibleTasks.filter((task) => task.dueDate === dateString)
     dayTasks.sort((a, b) => (a.dueTime || '99:99').localeCompare(b.dueTime || '99:99'))
 
@@ -140,7 +120,6 @@ function TaskCalendar() {
         onShareClick={() => setIsShareOpen(true)}
       />
 
-      {/* Month name and the buttons to change month */}
       <div className="row calendar-bar">
         <span className="section-title calendar-month">
           {MONTH_NAMES[month]} {year}
@@ -163,7 +142,6 @@ function TaskCalendar() {
         )}
       </div>
 
-      {/* The calendar scrolls sideways on small screens */}
       <div className="calendar-box">
         <div className="calendar">
           {WEEKDAY_NAMES.map((name) => (
@@ -206,7 +184,6 @@ function TaskCalendar() {
         </div>
       )}
 
-      {/* Pop-up windows (no delete confirmation: the calendar has no delete) */}
       {formTask && (
         <TaskForm readOnly={!canEditTasks}
           key={formTask._id || 'new'}

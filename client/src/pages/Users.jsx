@@ -1,6 +1,3 @@
-// Users.jsx
-// Read-only user list backed by the /api/users endpoint.
-
 import { useEffect, useState } from 'react'
 import Layout from '../components/Layout.jsx'
 import Icon from '../components/Icon.jsx'

@@ -12,7 +12,7 @@ function validDate(value) {
 
 function csvCell(value) {
   let text = String(value ?? '')
-  // Escape spreadsheet formulas as well as CSV quotes and commas.
+                                                                  
   if (/^[\s\uFEFF]*[=+@-]/.test(text) || /^[\t\r\n]/.test(text)) text = "'" + text
   return '"' + text.replaceAll('"', '""') + '"'
 }

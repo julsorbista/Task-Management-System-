@@ -1,6 +1,6 @@
-/* TaskList.css - the list (planner) view */
+                                            
 
-/* Lets the table scroll sideways on small screens */
+                                                     
 .task-table-box {
   overflow-x: auto;
   border-top: 1px solid var(--line);
@@ -10,8 +10,8 @@
   min-width: 780px;
 }
 
-/* One row. The columns are:
-   checkbox | title | due | status | priority | three-dot button */
+                            
+                                                                   
 .task-row {
   display: grid;
   grid-template-columns: 32px minmax(240px, 1fr) 150px 116px 96px 40px;
@@ -22,7 +22,7 @@
   border-bottom: 1px solid var(--line);
 }
 
-/* Shared pages have one more column: assignee (before priority) */
+                                                                   
 .task-row.shared {
   grid-template-columns: 32px minmax(240px, 1fr) 150px 116px 110px 96px 40px;
 }
@@ -31,7 +31,7 @@
   background: var(--faint);
 }
 
-/* The row with the column names */
+                                   
 .task-row-head {
   min-height: 36px;
   font-size: 12.5px;
@@ -42,7 +42,7 @@
   background: none;
 }
 
-/* ---------- Inline "add task" row ---------- */
+                                                 
 .task-add-icon {
   display: grid;
   place-items: center;
@@ -60,7 +60,7 @@
   white-space: nowrap;
 }
 
-/* Inputs without a visible box, so the row looks like a table row */
+                                                                     
 .task-bare-input {
   height: 32px;
   padding: 0 4px;
@@ -72,9 +72,9 @@
   border-color: var(--over);
 }
 
-/* ---------- Task rows ---------- */
+                                     
 
-/* Checkbox */
+              
 .task-check {
   width: 32px;
   height: 32px;
@@ -92,7 +92,7 @@
   border: 1.5px solid var(--muted);
   display: grid;
   place-items: center;
-  color: transparent; /* hides the check mark until it is checked */
+  color: transparent;                                               
 }
 
 .task-check.checked span {
@@ -101,7 +101,7 @@
   color: var(--on-accent);
 }
 
-/* Assigned to someone else on a shared page: grayed out, not clickable */
+                                                                          
 .task-check.locked {
   opacity: 0.4;
   cursor: not-allowed;
@@ -113,7 +113,7 @@
   stroke-width: 2.4;
 }
 
-/* Title and description: one big button that opens the form */
+                                                               
 .task-open {
   display: block;
   width: 100%;
@@ -134,7 +134,7 @@
   font-weight: 400;
 }
 
-/* Status with a small dot in front */
+                                      
 .status {
   display: inline-flex;
   align-items: center;
@@ -160,7 +160,7 @@
   background: var(--muted);
 }
 
-/* Three-dot button */
+                      
 .task-more {
   color: var(--text);
 }

@@ -1,4 +1,4 @@
-/* Layout.css - sidebar + top bar + page content */
+
 
 .layout {
   display: flex;
@@ -10,10 +10,10 @@
 .workspace-placeholder { margin-top: 24px; display: grid; gap: 16px; }
 .workspace-placeholder-row { height: 44px; background: var(--line); border-radius: 6px; opacity: .45; }
 
-/* Everything to the right of the sidebar */
+
 .layout-main {
   flex: 1;
-  min-width: 0; /* lets wide tables scroll instead of stretching the page */
+  min-width: 0; 
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -32,7 +32,7 @@
   border-bottom: 1px solid var(--line);
 }
 
-/* Theme toggle and bell, pushed to the right */
+
 .topbar-right {
   display: flex;
   align-items: center;
@@ -40,7 +40,7 @@
   margin-left: auto;
 }
 
-/* Unread count on the bell */
+
 .topbar-badge {
   position: absolute;
   top: 3px;
@@ -70,7 +70,7 @@
   overscroll-behavior: contain;
 }
 
-/* The dark layer behind the sidebar is only used on phones */
+
 .layout-veil {
   display: none;
 }

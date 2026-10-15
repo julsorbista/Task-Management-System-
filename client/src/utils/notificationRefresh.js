@@ -1,11 +1,11 @@
-// Poll only the lightweight notification endpoint; keep the workspace on screen.
+
 export function startNotificationRefresh(refresh, { browser = window, document = browser.document, interval = 10000 } = {}) {
   let stopped = false
   let pending = false
   async function check() {
     if (stopped || pending || document.visibilityState === 'hidden') return
     pending = true
-    try { await refresh() } catch { /* Keep existing notifications during connection errors. */ }
+    try { await refresh() } catch {                                                             }
     finally { pending = false }
   }
   const timer = browser.setInterval(check, interval)

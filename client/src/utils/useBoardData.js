@@ -10,7 +10,6 @@ function cachedBoard(pageId) {
     users: workspaceSnapshot.users, currentUser: workspaceSnapshot.user }
 }
 
-// Keep cached content visible during navigation and refresh permissions in the background.
 export default function useBoardData(pageId, reloadCount) {
   const revisions = useRef({})
   const [state, setState] = useState(() => ({ pageId, data: cachedBoard(pageId), error: '' }))
@@ -40,7 +39,7 @@ export default function useBoardData(pageId, reloadCount) {
         setState({ pageId, data: fresh, error: '' })
       }).catch((error) => {
         if (!active) return
-        // Discard cached content when access has been revoked.
+                                                               
         delete workspaceSnapshot.boards[pageId]
         setState({ pageId, data: null, error: error.message || 'Failed to load tasks.' })
       })

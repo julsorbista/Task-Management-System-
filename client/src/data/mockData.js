@@ -1,22 +1,10 @@
-// mockData.js
-// Sample data used while there is no backend.
-// The field names here are the ones the whole front end uses.
-// If the database uses different names, change them here and in api/api.js.
-//
-// Dates are written relative to today, so the "overdue" and "due today"
-// examples always look right no matter when you run the app.
-
 import { todayString, addDays } from '../utils/helpers.js'
-
 const today = todayString()
 
-// Shortcut: day(-2) is two days ago, day(3) is three days from now
 function day(offset) {
   return addDays(today, offset)
 }
 
-// ---------- Users ----------
-// Fields: _id, name, username, email, password, photo
 export const mockUsers = [
   { _id: 'u1', name: 'Maya Reyes', username: 'maya', email: 'maya@morrow.app', password: 'morrow123', photo: '' },
   { _id: 'u2', name: 'Daniel Kim', username: 'daniel', email: 'daniel@northfield.co', password: 'password1', photo: '' },
@@ -25,10 +13,6 @@ export const mockUsers = [
   { _id: 'u5', name: 'Priya Nair', username: 'priya', email: 'priya@northfield.co', password: 'password1', photo: '' },
 ]
 
-// ---------- Pages ----------
-// A page is a list of tasks shown in the sidebar.
-// Fields: _id, name, type ('private' or 'shared'), owner (user _id),
-//         members: [{ user (user _id), role ('owner', 'editor' or 'viewer') }]
 export const mockPages = [
   { _id: 'p1', name: 'My tasks', type: 'private', owner: 'u1', members: [{ user: 'u1', role: 'owner' }] },
   { _id: 'p2', name: 'Someday', type: 'private', owner: 'u1', members: [{ user: 'u1', role: 'owner' }] },
@@ -57,17 +41,6 @@ export const mockPages = [
   },
 ]
 
-// ---------- Tasks ----------
-// Fields: _id, page (page _id), title, description,
-//         dueDate ('YYYY-MM-DD' or ''), dueTime ('HH:MM' or ''),
-//         priority ('high', 'medium', 'low'),
-//         status ('todo', 'in-progress', 'done'),
-//         assignee (user _id or '', shared pages only),
-//         reminder ('none', 'at-time', '10-min', '1-hour', '1-day', 'custom'),
-//         reminderDate, reminderTime (only used when reminder is 'custom'),
-//         completedAt ('YYYY-MM-DD' or '')
-
-// Small function so each task below fits on a few lines
 function makeTask(_id, page, title, description, dueDate, dueTime, priority, status, extra) {
   return {
     _id,
@@ -88,7 +61,6 @@ function makeTask(_id, page, title, description, dueDate, dueTime, priority, sta
 }
 
 export const mockTasks = [
-  // Private: My tasks
   makeTask('t1', 'p1', 'Renew passport', 'Photos are in the blue folder. Bring the old passport to the appointment.', day(-2), '', 'high', 'todo'),
   makeTask('t2', 'p1', 'Book dentist appointment', 'Ask about the Saturday slots.', day(0), '16:00', 'medium', 'todo', { reminder: '1-hour' }),
   makeTask('t3', 'p1', 'Draft October budget', 'Start from last month and adjust rent and utilities.', day(1), '', 'low', 'in-progress'),
@@ -99,8 +71,6 @@ export const mockTasks = [
   makeTask('t8', 'p1', 'Return library books', '', day(-3), '', 'medium', 'done', { completedAt: day(-3) }),
   makeTask('t9', 'p1', 'Cancel gym trial', 'Before the first charge.', day(-8), '', 'high', 'done', { completedAt: day(-9) }),
   makeTask('t10', 'p1', 'File expense receipts', '', day(-15), '', 'medium', 'done', { completedAt: day(-16) }),
-
-  // Shared: Website relaunch
   makeTask('t11', 'p3', 'Write homepage copy', 'Hero, three feature blocks and the footer line.', day(-1), '', 'high', 'in-progress', { assignee: 'u1' }),
   makeTask('t12', 'p3', 'Review pricing page design', 'Check the annual toggle and the comparison table.', day(0), '14:00', 'high', 'todo', { assignee: 'u2', reminder: '1-hour' }),
   makeTask('t13', 'p3', 'Compress hero images', 'Target under 200 KB each.', day(1), '', 'low', 'in-progress', { assignee: 'u3' }),
@@ -110,8 +80,6 @@ export const mockTasks = [
   makeTask('t17', 'p3', 'Migrate blog posts', '', day(-6), '', 'medium', 'done', { assignee: 'u2', completedAt: day(-6) }),
   makeTask('t18', 'p3', 'Agree on sitemap', '', day(-20), '', 'high', 'done', { assignee: 'u1', completedAt: day(-21) }),
   makeTask('t19', 'p3', 'Pick analytics tool', '', day(-27), '', 'low', 'done', { assignee: 'u3', completedAt: day(-28) }),
-
-  // Shared: Q4 planning
   makeTask('t20', 'p4', 'Collect team OKR drafts', 'One page per team.', day(-3), '', 'medium', 'todo', { assignee: 'u2' }),
   makeTask('t21', 'p4', 'Budget review with finance', 'Bring the headcount scenarios.', day(8), '10:00', 'high', 'todo', { assignee: 'u5', reminder: '1-hour' }),
   makeTask('t22', 'p4', 'Update hiring plan', '', day(11), '', 'medium', 'todo', { assignee: 'u5' }),
@@ -120,10 +88,6 @@ export const mockTasks = [
   makeTask('t25', 'p4', 'Send Q3 survey', '', day(-12), '', 'low', 'done', { assignee: 'u2', completedAt: day(-13) }),
 ]
 
-// ---------- Notifications ----------
-// Fields: _id, user (who it is for), type ('due-soon', 'overdue', 'assigned', 'shared'),
-//         message, task (task _id or ''), page (page _id or ''),
-//         isRead (true or false), timeLabel (short text such as "1 hour ago")
 export const mockNotifications = [
   { _id: 'n1', user: 'u1', type: 'due-soon', message: 'Due today at 4:00 PM', task: 't2', page: 'p1', isRead: false, timeLabel: '1 hour ago' },
   { _id: 'n2', user: 'u1', type: 'assigned', message: 'Daniel Kim assigned this task to you', task: 't15', page: 'p3', isRead: false, timeLabel: '3 hours ago' },

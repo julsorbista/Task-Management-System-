@@ -1,46 +1,27 @@
-// TaskForm.jsx
-// The task form. The SAME form is used to create a task and to edit one.
-//
-// Props:
-//   task      the task to edit, or an empty task (see makeEmptyTask in helpers.js)
-//   page      the page the task belongs to
-//   users     all users (to show the assignee choices on shared pages)
-//   onSave    runs with the finished task when the user saves
-//   onCancel  runs when the user closes the form
-
 import { useState } from 'react'
 import Icon from './Icon.jsx'
 import { todayString, addDays, toDate, toDateString, formatDate, formatTime } from '../utils/helpers.js'
 import './TaskForm.css'
 
 function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
-  // A task that already has an _id is being edited. Without one it is new.
   const isEditing = Boolean(task._id)
   const isShared = page.type === 'shared'
-
-  // A copy of the task that changes as the user types
   const [form, setForm] = useState({ ...task })
   const [titleError, setTitleError] = useState('')
   const [reminderError, setReminderError] = useState('')
 
-  // Change one field of the form
   function changeField(name, value) {
     setForm({ ...form, [name]: value })
     setReminderError('')
     if (name === 'title') setTitleError('')
   }
 
-  // ---------- Quick due date options ----------
   const today = todayString()
   const tomorrow = addDays(today, 1)
 
-  // "Next week" means the coming Monday
-  const todayWeekday = toDate(today).getDay() // 0 = Sunday, 1 = Monday ...
+  const todayWeekday = toDate(today).getDay() 
   const daysUntilMonday = (8 - todayWeekday) % 7 || 7
   const nextMonday = addDays(today, daysUntilMonday)
-
-  // ---------- Reminder ----------
-  // Work out when the reminder will go off, to show it under the field
   function getReminderText() {
     const minutesBefore = { 'at-time': 0, '10-min': 10, '1-hour': 60, '1-day': 1440 }
 
@@ -50,8 +31,6 @@ function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
     }
 
     if (form.reminder === 'none' || !form.dueDate) return ''
-
-    // Without a due time we count from 9:00 AM
     const timeParts = (form.dueTime || '09:00').split(':')
     const reminderMoment = toDate(form.dueDate)
     reminderMoment.setHours(Number(timeParts[0]), Number(timeParts[1]) - minutesBefore[form.reminder])
@@ -63,14 +42,10 @@ function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
     return text
   }
 
-  // ---------- Save ----------
   function handleSave() {
-    // Check the form first
     let newTitleError = ''
     let newReminderError = ''
-
     if (form.title.trim() === '') newTitleError = 'Give the task a title.'
-
     const needsDueDate = ['at-time', '10-min', '1-hour', '1-day'].includes(form.reminder)
     if (needsDueDate && !form.dueDate) newReminderError = 'Set a due date to use this reminder.'
     if (form.reminder === 'custom' && (!form.reminderDate || !form.reminderTime)) {
@@ -84,11 +59,10 @@ function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
     onSave({
       ...form,
       title: form.title.trim(),
-      dueTime: form.dueDate ? form.dueTime : '', // a time without a date makes no sense
+      dueTime: form.dueDate ? form.dueTime : '', 
     })
   }
 
-  // People who can be assigned: the members of this page
   const members = (page.members || []).map((member) => users.find((user) => user._id === member.user)).filter(Boolean)
 
   return (
@@ -105,7 +79,7 @@ function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
         </div>
 
         <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-        {/* Title */}
+        {           }
         <div className="field">
           <label className="label" htmlFor="task-title">
             Title
@@ -120,7 +94,6 @@ function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
           {titleError && <div className="error-text">{titleError}</div>}
         </div>
 
-        {/* Description */}
         <div className="field">
           <label className="label" htmlFor="task-description">
             Description
@@ -134,7 +107,6 @@ function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
           ></textarea>
         </div>
 
-        {/* Due date and optional due time */}
         <div className="two-columns">
           <div className="field task-form-tight">
             <label className="label" htmlFor="task-due-date">
@@ -162,7 +134,6 @@ function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
           </div>
         </div>
 
-        {/* Quick options for the due date */}
         <div className="row task-form-quick">
           <button
             type="button"
@@ -194,7 +165,6 @@ function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
           </button>
         </div>
 
-        {/* Priority and status */}
         <div className="two-columns">
           <div className="field">
             <label className="label" htmlFor="task-priority">
@@ -228,7 +198,6 @@ function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
           </div>
         </div>
 
-        {/* Assignee: only on shared pages */}
         {isShared && (
           <div className="field">
             <span className="label">Assign</span>
@@ -254,7 +223,6 @@ function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
           </div>
         )}
 
-        {/* Reminder: a preset relative to the due time, or a chosen date and time */}
         <div className="field">
           <label className="label" htmlFor="task-reminder">
             Reminder

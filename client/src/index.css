@@ -1,40 +1,40 @@
-/* ==========================================================
-   index.css
-   Global styles for Morrow.
-   1. Color variables for the light theme
-   2. Color variables for the dark theme
-   3. Base styles (font, page background)
-   4. Small shared pieces used on many screens (buttons, inputs)
-   ========================================================== */
 
-/* ---------- 1. Light theme (the default) ---------- */
+
+
+
+
+
+
+
+
+
 :root {
-  --bg: #fafaf9;          /* page background (off-white) */
-  --surface: #ffffff;     /* cards, inputs, menus */
-  --line: #e6e6e3;        /* thin borders and dividers */
-  --text: #1e1f22;        /* main text */
-  --muted: #63656a;       /* secondary gray text */
-  --faint: #f2f2f0;       /* hover backgrounds */
+  --bg: #fafaf9;                                           
+  --surface: #ffffff;                               
+  --line: #e6e6e3;                                       
+  --text: #1e1f22;                       
+  --muted: #63656a;                                
+  --faint: #f2f2f0;                              
 
-  --accent: #4f6f6b;      /* the ONE accent color: primary buttons, active states */
-  --on-accent: #ffffff;   /* text on top of the accent color */
-  --tint: #eaf0ef;        /* very light accent, for active backgrounds */
+  --accent: #4f6f6b;                                                                
+  --on-accent: #ffffff;                                        
+  --tint: #eaf0ef;                                                       
 
-  --over: #b14f48;        /* soft red: overdue, errors, delete */
+  --over: #b14f48;                                               
   --over-bg: #f8e9e7;
 
-  --hi: #96473e;          /* priority: high */
+  --hi: #96473e;                              
   --hi-bg: #f6e4e1;
-  --md: #775817;          /* priority: medium */
+  --md: #775817;                                
   --md-bg: #f5ecd6;
-  --lo: #3f5f7d;          /* priority: low */
+  --lo: #3f5f7d;                             
   --lo-bg: #e3ecf4;
 
-  --veil: rgba(30, 31, 34, 0.28); /* dark layer behind pop-up windows */
+  --veil: rgba(30, 31, 34, 0.28);                                       
 }
 
-/* ---------- 2. Dark theme ----------
-   Turned on by setting data-theme="dark" on the <html> tag. */
+
+
 :root[data-theme='dark'] {
   --bg: #151617;
   --surface: #1b1c1e;
@@ -60,7 +60,7 @@
   --veil: rgba(0, 0, 0, 0.55);
 }
 
-/* ---------- 3. Base styles ---------- */
+
 * {
   box-sizing: border-box;
 }
@@ -81,7 +81,7 @@ p {
   margin: 0;
 }
 
-/* Form controls do not inherit the font by default, so we ask them to */
+
 button,
 input,
 select,
@@ -94,15 +94,15 @@ button {
   cursor: pointer;
 }
 
-/* Visible outline when moving around with the keyboard */
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
-/* ---------- 4. Shared pieces ---------- */
 
-/* Standard button */
+
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -126,7 +126,7 @@ button {
   cursor: not-allowed;
 }
 
-/* Primary button (uses the accent color) */
+
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
@@ -138,18 +138,18 @@ button {
   opacity: 0.92;
 }
 
-/* Red text button, for delete actions */
+
 .btn-danger {
   color: var(--over);
 }
 
-/* Full-width button, used on the auth screens */
+
 .btn-wide {
   width: 100%;
   min-height: 40px;
 }
 
-/* Square button that only holds an icon */
+
 .icon-btn {
   display: inline-flex;
   align-items: center;
@@ -169,13 +169,13 @@ button {
   color: var(--text);
 }
 
-/* Highlighted icon button (for example the bell on the Notifications view) */
+
 .icon-btn.active {
   background: var(--tint);
   color: var(--accent);
 }
 
-/* Line icons: every <svg className="icon"> gets the same thin stroke */
+
 .icon {
   width: 16px;
   height: 16px;
@@ -187,7 +187,7 @@ button {
   flex: none;
 }
 
-/* Button that looks like a text link */
+
 .link {
   background: none;
   border: 0;
@@ -201,7 +201,7 @@ button {
   text-decoration: underline;
 }
 
-/* Form field: label + input + error message */
+
 .field {
   margin-bottom: 16px;
 }
@@ -262,7 +262,7 @@ textarea.input {
   resize: vertical;
 }
 
-/* Red border when the field has an error */
+
 .input.has-error {
   border-color: var(--over);
 }
@@ -277,7 +277,7 @@ textarea.input {
   color: var(--muted);
 }
 
-/* Bigger touch targets on phones */
+
 @media (max-width: 760px) {
   .btn {
     min-height: 44px;
@@ -293,9 +293,9 @@ textarea.input {
   }
 }
 
-/* ---------- 5. More shared pieces (used by several screens) ---------- */
 
-/* Priority chip */
+
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -321,7 +321,7 @@ textarea.input {
   color: var(--lo);
 }
 
-/* Due date text. Overdue is shown in soft red. */
+
 .due {
   font-size: 13px;
   color: var(--muted);
@@ -333,7 +333,7 @@ textarea.input {
   font-weight: 500;
 }
 
-/* Round avatar with initials or a photo */
+
 .avatar {
   display: inline-flex;
   align-items: center;
@@ -355,7 +355,7 @@ textarea.input {
   object-fit: cover;
 }
 
-/* Pop-up window: a dark layer with a card in the middle */
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -403,7 +403,7 @@ textarea.input {
   margin-top: 8px;
 }
 
-/* Page titles */
+
 .page-title {
   font-size: 22px;
   font-weight: 600;
@@ -415,7 +415,7 @@ textarea.input {
   font-weight: 600;
 }
 
-/* Small rounded choice button (used for toggles and quick options) */
+
 .pill {
   min-height: 30px;
   padding: 0 11px;
@@ -435,7 +435,7 @@ textarea.input {
   font-weight: 600;
 }
 
-/* Row of things with a small gap that wraps on small screens */
+
 .row {
   display: flex;
   flex-wrap: wrap;
@@ -443,14 +443,14 @@ textarea.input {
   gap: 8px;
 }
 
-/* Two columns that become one on phones */
+
 .two-columns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
-/* White box with a thin border */
+
 .panel {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -458,7 +458,7 @@ textarea.input {
   padding: 20px;
 }
 
-/* Message shown when a list has nothing in it */
+
 .empty-state {
   padding: 56px 16px;
   text-align: center;
@@ -472,7 +472,7 @@ textarea.input {
   margin-bottom: 4px;
 }
 
-/* One line of text that ends with "..." when it is too long */
+
 .one-line {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -484,7 +484,7 @@ textarea.input {
   color: var(--muted);
 }
 
-/* Hidden on screen but still read by screen readers */
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -507,7 +507,7 @@ textarea.input {
   }
 }
 
-/* Links styled as buttons keep the button text color */
+
 a.btn {
   color: var(--text);
   text-decoration: none;

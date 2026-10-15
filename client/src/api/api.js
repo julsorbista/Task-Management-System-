@@ -1,22 +1,22 @@
-// api.js
-// EVERY data function of the app lives in this file.
-//
-// Auth, accounts, boards, tasks, and notifications use the backend.
-//
-// FOR THE BACKEND DEVELOPER:
-// Each function is "async" and returns the same shape a real API would.
-// Replace the body of each function with a fetch call, for example:
-//
-//   export async function getTasks() {
-//     const response = await fetch('/api/tasks')
-//     return response.json()
-//   }
-//
-// The pages only call these functions, so nothing else needs to change.
+         
+                                                     
+  
+                                                                    
+  
+                             
+                                                                        
+                                                                    
+  
+                                       
+                                                 
+                             
+      
+  
+                                                                        
 
 import { clearWorkspaceSnapshot, workspaceSnapshot, publishWorkspaceChange, publishNotifications } from '../utils/workspaceSnapshot.js'
 
-// ---------- Small helpers used only inside this file ----------
+                                                                 
 
 async function apiRequest(path, options = {}) {
   const response = await fetch(path, {
@@ -34,11 +34,6 @@ async function apiRequest(path, options = {}) {
   return data
 }
 
-// =====================================================
-// AUTH
-// =====================================================
-
-// Start login. Throws an error when the username/email or password is wrong.
 export async function login(identifier, password) {
   clearWorkspaceSnapshot()
   return apiRequest('/api/auth/login', {
@@ -47,7 +42,6 @@ export async function login(identifier, password) {
   })
 }
 
-// Finish login after the OTP has been entered.
 export async function verifyLoginOtp(challengeId, otp) {
   clearWorkspaceSnapshot()
   const data = await apiRequest('/api/auth/login/verify-otp', {
@@ -60,7 +54,6 @@ export async function verifyLoginOtp(challengeId, otp) {
   return data.user
 }
 
-// Create an account and log in. Throws an error when the username or email is taken.
 export async function register(name, username, email, password) {
   const data = await apiRequest('/api/auth/register', {
     method: 'POST',
@@ -70,14 +63,12 @@ export async function register(name, username, email, password) {
   return data.user
 }
 
-// Log out
 export async function logout() {
   await apiRequest('/api/auth/logout', { method: 'POST', body: '{}' })
   clearWorkspaceSnapshot()
   localStorage.removeItem('morrow-user-id')
 }
 
-// The logged-in user, or null when nobody is logged in
 export async function getCurrentUser() {
   const response = await fetch('/api/users/me', {
     credentials: 'include',
@@ -96,24 +87,16 @@ export async function getCurrentUser() {
   return data
 }
 
-// Ask for a password reset email. (The real backend sends the email.)
-// We remember the email so resetPassword knows which account to change.
 export async function requestPasswordReset(email) {
   return apiRequest('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) })
 }
 
-// Set a new password after following the reset link
 export async function resetPassword(newPassword, token, confirmPassword) {
   return apiRequest('/api/auth/reset-password', {
     method: 'POST', body: JSON.stringify({ password: newPassword, token, confirmPassword }),
   })
 }
 
-// =====================================================
-// USERS AND PROFILE
-// =====================================================
-
-// All users (used to show names and avatars)
 export async function getUsers() {
   const response = await fetch('/api/users', {
     credentials: 'include',
@@ -121,8 +104,6 @@ export async function getUsers() {
 
   return readApiJson(response, 'Failed to load users.')
 }
-
-// Change the logged-in user's name, email or photo
 export async function updateProfile(changes) {
   const profileChanges = {}
   if (changes.name !== undefined) profileChanges.name = changes.name
@@ -151,7 +132,6 @@ export async function updateProfile(changes) {
   return data
 }
 
-// Change the password. Throws an error when the current password is wrong.
 export async function changePassword(currentPassword, newPassword, confirmPassword) {
   const response = await fetch('/api/users/me/password', {
     method: 'PATCH', credentials: 'include',
@@ -167,37 +147,32 @@ export async function changePassword(currentPassword, newPassword, confirmPasswo
   return data
 }
 
-// Delete the logged-in user's account. The server also deletes the pages they own
-// and those pages' tasks. The login cookie is sent along with the request.
+                                                                                  
+                                                                           
 export async function deleteAccount() {
   const url = '/api/users/me'
   const response = await fetch(url, {
     method: 'DELETE',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-    body: '{}', // the server only accepts write requests that send JSON
+    body: '{}',                                                         
   })
 
-  // Success is "204 No Content", so there is no JSON to read
+                                                             
   if (!response.ok) {
     const data = await response.json().catch(() => ({}))
     const message = data.message || 'Could not delete your account.'
-    // Details for the backend developer, in the browser console
+                                                                
     console.error('Delete account failed: DELETE ' + url + ' -> ' + response.status + ' ' + message)
     throw new Error(message)
   }
 
-  // Clear the saved login: the cookie (through log out), the saved id and the cached data
+                                                                                          
   await logout().catch(() => {})
   clearWorkspaceSnapshot()
   localStorage.removeItem('morrow-user-id')
 }
 
-// =====================================================
-// PAGES (the Private and Shared lists in the sidebar)
-// =====================================================
-
-// Pages the logged-in user can see
 export async function getPages() {
   const response = await fetch('/api/boards', {
     credentials: 'include',
@@ -206,7 +181,6 @@ export async function getPages() {
   return readApiJson(response, 'Failed to load pages.')
 }
 
-// One page by id, or null when it does not exist
 export async function getPage(pageId) {
   const response = await fetch(`/api/boards/${pageId}`, {
     credentials: 'include',
@@ -219,7 +193,6 @@ export async function getPage(pageId) {
   return readApiJson(response, 'Failed to load page.')
 }
 
-// Add a page. type is 'private' or 'shared'.
 export async function createPage(name, type) {
   const response = await fetch('/api/boards', {
     method: 'POST',
@@ -234,7 +207,6 @@ export async function createPage(name, type) {
   return readApiJson(response, 'Failed to create page.')
 }
 
-// Rename a page
 export async function renamePage(pageId, newName) {
   const response = await fetch(`/api/boards/${pageId}`, {
     method: 'PATCH',
@@ -248,8 +220,6 @@ export async function renamePage(pageId, newName) {
 
   return readApiJson(response, 'Failed to rename page.')
 }
-
-// Delete a page and every task on it
 export async function deletePage(pageId) {
   const response = await fetch(`/api/boards/${pageId}`, {
     method: 'DELETE',
@@ -267,12 +237,6 @@ export async function deletePage(pageId) {
   }
 }
 
-// =====================================================
-// SHARING (members of a shared page)
-// =====================================================
-
-// Invite someone by email. role is 'editor' or 'viewer'.
-// Throws an error when the person already has access.
 export async function inviteMember(pageId, email, role) {
   const response = await fetch(`/api/boards/${pageId}/members`, {
     method: 'POST',
@@ -287,7 +251,6 @@ export async function inviteMember(pageId, email, role) {
   return readApiJson(response, 'Failed to invite member.')
 }
 
-// Change a member's role to 'editor' or 'viewer'
 export async function updateMemberRole(pageId, userId, role) {
   const response = await fetch(`/api/boards/${pageId}/members/${userId}`, {
     method: 'PATCH',
@@ -301,7 +264,7 @@ export async function updateMemberRole(pageId, userId, role) {
   return readApiJson(response, 'Failed to change member role.')
 }
 
-// Remove a member from a shared page.
+ 
 export async function removeMember(pageId, userId) {
   const response = await fetch(`/api/boards/${pageId}/members/${userId}`, {
     method: 'DELETE',
@@ -315,10 +278,6 @@ export async function removeMember(pageId, userId) {
 
   return readApiJson(response, 'Failed to remove member.')
 }
-
-// =====================================================
-// TASKS
-// =====================================================
 
 const taskFields = [
   'title',
@@ -388,14 +347,12 @@ async function readApiJson(response, fallbackMessage) {
   return data
 }
 
-// Every task on the pages the logged-in user can see
 export async function getTasks(loadedBoards) {
   const boards = loadedBoards || await getPages()
   const lists = await Promise.all(boards.map((board) => getTasksByPage(board._id)))
   return lists.flat()
 }
 
-// The tasks of one page
 export async function getTasksByPage(pageId) {
   const response = await fetch(`/api/boards/${pageId}/tasks`, {
     credentials: 'include',
@@ -404,7 +361,6 @@ export async function getTasksByPage(pageId) {
   return readApiJson(response, 'Failed to load tasks.')
 }
 
-// Add a task. taskData holds the task fields (see mockData.js).
 export async function createTask(taskData) {
   const response = await fetch(`/api/boards/${taskData.page}/tasks`, {
     method: 'POST',
@@ -419,7 +375,6 @@ export async function createTask(taskData) {
   return readApiJson(response, 'Failed to create task.')
 }
 
-// Change a task. changes holds only the fields that changed.
 export async function updateTask(pageIdOrTaskId, taskIdOrChanges, maybeChanges) {
   const hasPageId = maybeChanges !== undefined
   const pageId = hasPageId ? pageIdOrTaskId : taskIdOrChanges?.page
@@ -443,7 +398,7 @@ export async function updateTask(pageIdOrTaskId, taskIdOrChanges, maybeChanges) 
   return readApiJson(response, 'Failed to update task.')
 }
 
-// Delete a task
+ 
 export async function deleteTask(pageId, taskId) {
   const response = await fetch(`/api/boards/${pageId}/tasks/${taskId}`, {
     method: 'DELETE',
@@ -461,11 +416,6 @@ export async function deleteTask(pageId, taskId) {
   }
 }
 
-// =====================================================
-// NOTIFICATIONS
-// =====================================================
-
-// The logged-in user's notifications
 let notificationRevision = 0
 let notificationRequest = null
 export async function getNotifications() {
@@ -482,7 +432,6 @@ export async function getNotifications() {
   })
 
   const data = await readApiJson(response, 'Failed to load notifications.')
-  // A response started before a local write or account switch must not undo it.
   if (revision !== notificationRevision || userId !== workspaceSnapshot.user?._id) return workspaceSnapshot.notifications
   workspaceSnapshot.notifications = (data.notifications || []).map(formatNotification)
   publishNotifications()
@@ -490,7 +439,6 @@ export async function getNotifications() {
   }
 }
 
-// Mark one notification as read (true) or unread (false)
 export async function setNotificationRead(notificationId, isRead) {
   if (!isRead) {
     throw new Error('Notifications can only be marked as read right now.')
@@ -516,7 +464,6 @@ export async function setNotificationRead(notificationId, isRead) {
   return updated
 }
 
-// Mark all of the user's notifications as read
 export async function markAllNotificationsRead() {
   const response = await fetch('/api/users/notifications/read-all', {
     method: 'PATCH',
@@ -537,7 +484,6 @@ export async function markAllNotificationsRead() {
   return result
 }
 
-// Remove every notification that is already read
 export async function clearReadNotifications() {
   const response = await fetch('/api/users/notifications/read', {
     method: 'DELETE',

@@ -1,4 +1,4 @@
-/* Sidebar.css */
+
 
 .sidebar {
   width: 236px;
@@ -12,16 +12,16 @@
   background: var(--bg);
   position: relative;
   z-index: 35;
-  /* Short slide animation when it opens and closes */
+
   transition: margin-left 0.22s ease;
 
-  /* One shared icon column on the right: the toggle, the plus buttons,
-     the page "..." buttons and log out all use this size and right inset */
+                                                                       
+                                                                            
   --sidebar-btn: 28px;
   --sidebar-right: 4px;
 }
 
-/* Every right-side icon button in the sidebar: same size, icon centered */
+                                                                           
 .sidebar .sidebar-btn {
   width: var(--sidebar-btn);
   height: var(--sidebar-btn);
@@ -37,7 +37,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  margin-bottom: 20px; /* space above the user row */
+  margin-bottom: 20px;                               
 }
 
 .sidebar-top,
@@ -46,7 +46,7 @@
   flex-shrink: 0;
 }
 
-/* Closed: slide it out of view to the left */
+
 .sidebar.closed {
   margin-left: -236px;
   visibility: hidden;
@@ -55,7 +55,7 @@
     visibility 0s 0.22s;
 }
 
-/* ---------- Top row ---------- */
+
 .sidebar-top {
   display: flex;
   align-items: center;
@@ -80,7 +80,7 @@
   stroke-width: 2;
 }
 
-/* ---------- Search ---------- */
+
 .sidebar-search {
   position: relative;
   margin-top: 12px;
@@ -98,7 +98,7 @@
   padding-left: 34px;
 }
 
-/* Drop-down with the search results (wider than the sidebar) */
+
 .sidebar-results {
   position: absolute;
   left: 0;
@@ -131,7 +131,7 @@
   font-weight: 500;
 }
 
-/* Small gray "Pages" / "Tasks" label above each group of results */
+                                                                    
 .sidebar-results-heading {
   padding: 10px 14px 4px;
   font-size: 12px;
@@ -139,7 +139,7 @@
   color: var(--muted);
 }
 
-/* A page result: page icon, then the name and Private / Shared */
+                                                                  
 .sidebar-result-page {
   display: flex;
   align-items: center;
@@ -159,7 +159,7 @@
   min-width: 0;
 }
 
-/* ---------- Links ---------- */
+                                 
 .sidebar-dashboard {
   margin-top: 12px;
 }
@@ -193,7 +193,7 @@
   color: var(--accent);
 }
 
-/* The page you are on */
+                         
 .sidebar-link.active,
 .sidebar-page:hover > .sidebar-link.active {
   background: var(--tint);
@@ -201,7 +201,7 @@
   font-weight: 600;
 }
 
-/* Number of open tasks, on the right */
+
 .sidebar-count {
   margin-left: auto;
   flex: none;
@@ -212,14 +212,14 @@
   color: var(--muted);
 }
 
-/* Thin gray line under the Dashboard tab */
+
 .sidebar-divider {
   height: 1px;
   background: var(--line);
   margin: 8px 10px;
 }
 
-/* ---------- Private / Shared sections ---------- */
+
 .sidebar-section {
   display: flex;
   align-items: center;
@@ -241,12 +241,12 @@
   margin-top: 22px;
 }
 
-/* The small plus button beside the section label */
+
 .sidebar-add {
   margin-left: auto;
 }
 
-/* One page: the link and its three-dot button */
+                                                 
 .sidebar-page,
 .sidebar-user {
   position: relative;
@@ -254,13 +254,13 @@
   align-items: center;
 }
 
-/* The link covers the whole row; its right padding leaves room for the
-   icon button, so counts line up and the button sits in the same spot */
+                                                                       
+                                                                         
 .sidebar-page > .sidebar-link {
   padding-right: calc(var(--sidebar-right) + var(--sidebar-btn) + 6px);
 }
 
-/* The "..." button sits inside the row, on the shared right edge */
+                                                                    
 .sidebar-page-more {
   position: absolute;
   top: 50%;
@@ -268,7 +268,7 @@
   transform: translateY(-50%);
 }
 
-/* The three-dot button only shows when the mouse is over the page */
+
 .sidebar-page-more {
   opacity: 0;
 }
@@ -278,7 +278,7 @@
   opacity: 1;
 }
 
-/* Touch screens have no hover, so always show it there */
+
 @media (hover: none) {
   .sidebar-page-more {
     opacity: 1;
@@ -289,11 +289,11 @@
   height: 34px;
 }
 
-/* ---------- User row at the bottom ---------- */
-/* One flex row: avatar, name and log out, all centered on the same line.
-   The log out button is a normal item at the end, on the shared right edge. */
+                                                  
+                                                                         
+                                                                               
 .sidebar-user {
-  margin-top: auto; /* pushes this row to the bottom */
+  margin-top: auto;                                    
   gap: 6px;
   padding-right: var(--sidebar-right);
   border-radius: 6px;
@@ -303,7 +303,7 @@
   min-height: 44px;
 }
 
-/* The highlight is drawn on the whole row, so it covers the log out button too */
+                                                                                  
 .sidebar-user > .sidebar-link,
 .sidebar-user > .sidebar-link:hover,
 .sidebar-user > .sidebar-link.active {
@@ -318,7 +318,7 @@
   background: var(--tint);
 }
 
-/* ---------- Phones: the sidebar slides in on top of the page ---------- */
+                                                                            
 @media (max-width: 760px) {
   .sidebar,
   .sidebar.closed {
@@ -348,7 +348,7 @@
   }
 }
 
-/* "No results" message inside the search drop-down */
+
 .sidebar-no-results {
   padding: 28px 16px;
 }

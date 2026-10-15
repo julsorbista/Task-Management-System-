@@ -96,6 +96,7 @@ const taskSchema = new mongoose.Schema(
 
     reminderDate: dateField(),
     reminderTime: timeField(),
+    deliveredReminders: { type: [String], default: [], select: false },
     completedAt: dateField(),
 
     createdBy: {

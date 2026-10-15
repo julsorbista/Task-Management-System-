@@ -1,9 +1,4 @@
-// Icon.jsx
-// All the small line icons in one place.
-// Use it like this: <Icon name="bell" />
-
 function Icon({ name }) {
-  // Each icon is drawn on a 24 x 24 grid
   const shapes = {
     logo: (
       <>

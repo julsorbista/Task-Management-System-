@@ -1,9 +1,3 @@
-// TaskList.jsx
-// List (planner) view: a table of the tasks on one page.
-//   - an inline "add task" row at the bottom, below the last task
-//   - a three-dot button after Priority with Edit and Delete
-//   - clicking a task opens the task form
-
 import { useState } from 'react'
 import useBoardData from '../utils/useBoardData.js'
 import { useParams, useSearchParams } from 'react-router-dom'
@@ -30,12 +24,8 @@ import {
 import './TaskList.css'
 
 function TaskList() {
-  // The page id comes from the URL: /pages/:pageId/list
   const { pageId } = useParams()
-  // The sidebar search opens a task by adding ?task=<id> to the URL
   const [searchParams, setSearchParams] = useSearchParams()
-
-  // Data
   const [reloadCount, setReloadCount] = useState(0)
   const { page, tasks, users, currentUser, setTasks, hasLoaded, loadError } = useBoardData(pageId, reloadCount)
   const [savingTaskIds, setSavingTaskIds] = useState([])
@@ -44,32 +34,20 @@ function TaskList() {
     page.members?.some((member) => member.user === currentUser._id && member.role === 'editor')
   ))
 
-
-  // Filter and sort choices
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
-
-  // Inline "add task" row
   const [newTitle, setNewTitle] = useState('')
   const [newDueDate, setNewDueDate] = useState('')
   const [newPriority, setNewPriority] = useState('medium')
   const [newTitleError, setNewTitleError] = useState(false)
-
-  // Ids of tasks added from the bottom row. They are shown last,
-  // right above the add field, so you can see what you just added.
   const [addedIds, setAddedIds] = useState([])
-
-  // Pop-up windows
-  const [formTask, setFormTask] = useState(null) // task shown in the form, or null
-  const [taskToDelete, setTaskToDelete] = useState(null) // task waiting for confirmation, or null
+  const [formTask, setFormTask] = useState(null)  
+  const [taskToDelete, setTaskToDelete] = useState(null) 
   const [isShareOpen, setIsShareOpen] = useState(false)
 
-  // Load the page, its tasks and the users
   function reloadData() {
     setReloadCount((count) => count + 1)
   }
 
-  // ---------- Create ----------
-  // Add a task from the inline row
   async function handleAddInline() {
     if (newTitle.trim() === '') {
       setNewTitleError(true)
@@ -82,8 +60,6 @@ function TaskList() {
     const savedTask = await createTask(newTask)
     setTasks((items) => [...items, savedTask])
     setAddedIds((ids) => [...ids, savedTask._id])
-
-    // Empty the row and keep the cursor in the field for the next task
     setNewTitle('')
     setNewDueDate('')
     setNewPriority('medium')
@@ -91,7 +67,6 @@ function TaskList() {
     showToast('Task added')
   }
 
-  // Open the full form, keeping what was typed in the inline row
   function handleMoreFields() {
     const newTask = makeEmptyTask(pageId)
     newTask.title = newTitle
@@ -103,8 +78,6 @@ function TaskList() {
     setNewPriority('medium')
   }
 
-  // ---------- Update ----------
-  // Save the task form (works for both a new task and an edited one)
   async function handleSaveTask(taskData) {
     if (taskData._id) {
       const savedTask = await updateTask(pageId, taskData._id, taskData)
@@ -143,10 +116,9 @@ function TaskList() {
 
   function closeForm() {
     setFormTask(null)
-    setSearchParams({}) // remove ?task=... from the URL
+    setSearchParams({}) 
   }
 
-  // ---------- Delete ----------
   async function handleConfirmDelete() {
     await deleteTask(pageId, taskToDelete._id)
     setTasks((items) => items.filter((item) => item._id !== taskToDelete._id))
@@ -154,7 +126,6 @@ function TaskList() {
     showToast('Task deleted')
   }
 
-  // ---------- What to show ----------
   if (!hasLoaded) return <Layout><WorkspacePlaceholder pageId={pageId} /></Layout>
   if (loadError) return <Layout><p role="alert" className="error-text">{loadError}</p></Layout>
 
@@ -170,14 +141,11 @@ function TaskList() {
   }
 
   const isShared = page.type === 'shared'
-  // Sorted tasks first, then the ones just added from the bottom row (in the order added)
   const sortedTasks = filterAndSortTasks(tasks, filters)
   const justAdded = sortedTasks.filter((task) => addedIds.includes(task._id))
   justAdded.sort((a, b) => addedIds.indexOf(a._id) - addedIds.indexOf(b._id))
   const visibleTasks = [...sortedTasks.filter((task) => !addedIds.includes(task._id)), ...justAdded]
   const rowClass = isShared ? 'task-row shared' : 'task-row'
-
-  // The task to show in the form: one picked here, or one opened from the search
   const taskFromSearch = tasks.find((task) => task._id === searchParams.get('task'))
   const taskInForm = formTask || taskFromSearch || null
 
@@ -191,10 +159,8 @@ function TaskList() {
         onShareClick={() => setIsShareOpen(true)}
       />
 
-      {/* The table scrolls sideways on small screens */}
       <div className="task-table-box">
         <div className="task-table">
-          {/* Column names. There is no "Actions" column. */}
           <div className={rowClass + ' task-row-head'}>
             <span></span>
             <span>Title</span>
@@ -205,7 +171,6 @@ function TaskList() {
             <span></span>
           </div>
 
-          {/* One row per task */}
           {visibleTasks.map((task) => {
             const isDone = task.status === 'done'
             const assignee = users.find((user) => user._id === task.assignee)
@@ -248,7 +213,6 @@ function TaskList() {
                   <span className={'chip chip-' + task.priority}>{PRIORITY_LABELS[task.priority]}</span>
                 </span>
 
-                {/* Three-dot button right after Priority */}
                 {canEditTasks && <MoreMenu
                   label="More actions"
                   buttonClass="task-more"
@@ -261,7 +225,6 @@ function TaskList() {
             )
           })}
 
-          {/* Inline "add task" row, below the last task */}
           <div className={rowClass} style={{ display: canEditTasks ? undefined : 'none' }}>
             <span className="task-add-icon">
               <Icon name="plus" />
@@ -316,7 +279,6 @@ function TaskList() {
         </div>
       </div>
 
-      {/* Empty states */}
       {tasks.length === 0 && (
         <div className="empty-state">
           <strong>No tasks yet</strong>
@@ -332,7 +294,6 @@ function TaskList() {
         </div>
       )}
 
-      {/* Pop-up windows */}
       {taskInForm && (
         <TaskForm readOnly={!canEditTasks}
           key={taskInForm._id || 'new'}

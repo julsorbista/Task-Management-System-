@@ -1,8 +1,3 @@
-// ShareModal.jsx
-// Share a board: invite people by email, copy a shared link,
-// change a person's role (Viewer or Editor) or remove them.
-// Only the owner of the page can invite, change roles and remove people.
-
 import { useState } from 'react'
 import Icon from './Icon.jsx'
 import ConfirmDelete from './ConfirmDelete.jsx'
@@ -17,14 +12,12 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
   const [inviteError, setInviteError] = useState('')
   const [isInviting, setIsInviting] = useState(false)
   const [newInvitations, setNewInvitations] = useState([])
-  const [message, setMessage] = useState('') // small text when copying fails
+  const [message, setMessage] = useState('') 
   const [memberToRemove, setMemberToRemove] = useState(null)
-
   const boardId = page._id || page.id || pageId
   const isOwner = page.owner === currentUser._id
   const shareLink = window.location.origin + '/pages/' + boardId + '/list'
 
-  // Invite a person by email
   async function handleInvite() {
     if (isInviting) return
     if (inviteEmail.trim() === '') {
@@ -46,7 +39,7 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
       showToast('Invitation email sent')
       setInviteEmail('')
       setInviteError('')
-      onChanged() // the page reloads its data
+      onChanged() 
     } catch (error) {
       setInviteError(error.message)
     } finally {
@@ -54,7 +47,6 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
     }
   }
 
-  // Copy the shared link
   async function handleCopyLink() {
     try {
       await navigator.clipboard.writeText(shareLink)
@@ -65,7 +57,6 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
     }
   }
 
-  // Change a person's role
   async function handleRoleChange(userId, newRole) {
     try {
       await updateMemberRole(boardId, userId, newRole)
@@ -75,7 +66,6 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
     }
   }
 
-  // Remove a person (after the confirmation)
   async function confirmRemove() {
     try {
       await removeMember(boardId, memberToRemove._id)
@@ -96,7 +86,6 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
           </button>
         </div>
 
-        {/* Invite by email (owner only) */}
         {isOwner ? (
           <div className="field">
             <label className="label" htmlFor="share-email">
@@ -136,7 +125,6 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
           </p>
         )}
 
-        {/* Shared link */}
         <div className="field">
           <span className="label">Shared link</span>
           <div className="share-line">

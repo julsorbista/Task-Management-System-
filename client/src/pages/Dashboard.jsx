@@ -1,7 +1,3 @@
-// Dashboard.jsx
-// Report charts for all Private and Shared tasks, plus the Export button.
-// The charts are plain <div> bars styled with CSS, so no chart library is needed.
-
 import { useState, useEffect } from 'react'
 import Layout from '../components/Layout.jsx'
 import WorkspacePlaceholder from '../components/WorkspacePlaceholder.jsx'
@@ -41,21 +37,18 @@ function Dashboard() {
     return () => { active = false }
   }, [])
 
-  // ---------- Numbers for the four tiles ----------
   const completedTasks = tasks.filter((task) => task.status === 'done')
   const overdueTasks = tasks.filter((task) => isOverdue(task))
   const openCount = tasks.length - completedTasks.length
   const completionRate = tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0
 
-  // Turn a count into a bar width (percent of the biggest count)
   function toPercent(count, biggest) {
     if (biggest === 0) return 0
     return Math.round((count / biggest) * 100)
   }
 
-  // ---------- Chart 1: tasks completed per week, last six weeks ----------
   const today = todayString()
-  const weekday = toDate(today).getDay() // 0 = Sunday
+  const weekday = toDate(today).getDay() 
   const daysSinceMonday = (weekday + 6) % 7
   const thisMonday = addDays(today, -daysSinceMonday)
 
@@ -68,7 +61,6 @@ function Dashboard() {
   }
   const biggestWeek = Math.max(1, ...weeks.map((week) => week.count))
 
-  // ---------- Chart 2: completed vs. overdue, per page ----------
   const pageStats = pages
     .map((page) => ({
       name: page.name,
@@ -79,15 +71,12 @@ function Dashboard() {
     .filter((stat) => stat.total > 0)
   const biggestPageNumber = Math.max(1, ...pageStats.map((stat) => Math.max(stat.completed, stat.overdue)))
 
-  // ---------- Chart 3: by priority ----------
   const priorityStats = [
     { label: 'High', barClass: 'bar-high', count: tasks.filter((task) => task.priority === 'high').length },
     { label: 'Medium', barClass: 'bar-medium', count: tasks.filter((task) => task.priority === 'medium').length },
     { label: 'Low', barClass: 'bar-low', count: tasks.filter((task) => task.priority === 'low').length },
   ]
   const biggestPriority = Math.max(1, ...priorityStats.map((stat) => stat.count))
-
-  // ---------- Chart 4: by status ----------
   const statusStats = [
     { label: 'To Do', barClass: 'bar-muted', count: tasks.filter((task) => task.status === 'todo').length },
     { label: 'In Progress', barClass: '', count: tasks.filter((task) => task.status === 'in-progress').length },
@@ -140,7 +129,6 @@ function Dashboard() {
             {weeks.map((week) => (
               <div className="week-bar" key={week.label}>
                 <span>{week.count}</span>
-                {/* The bar is 120px tall for the biggest week */}
                 <div className="week-bar-fill" style={{ height: Math.round((week.count / biggestWeek) * 120) }}></div>
               </div>
             ))}
@@ -152,7 +140,6 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Chart 2: completed vs. overdue */}
         <div className="panel">
           <div className="section-title">Completed vs. overdue</div>
           <div className="small-text">By page</div>
@@ -180,7 +167,6 @@ function Dashboard() {
           ))}
         </div>
 
-        {/* Chart 3: by priority */}
         <div className="panel">
           <div className="section-title">By priority</div>
           {priorityStats.map((stat) => (
@@ -197,7 +183,6 @@ function Dashboard() {
           ))}
         </div>
 
-        {/* Chart 4: by status */}
         <div className="panel">
           <div className="section-title">By status</div>
           {statusStats.map((stat) => (

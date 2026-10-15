@@ -1,6 +1,3 @@
-// ForgotPassword.jsx
-// Enter your email to get a password reset link.
-
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard.jsx'
@@ -24,7 +21,6 @@ function ForgotPassword() {
       setEmailError('Enter a valid email address.')
       return
     }
-
     if (isSending) return
     setIsSending(true)
     try {

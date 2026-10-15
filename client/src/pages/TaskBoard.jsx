@@ -1,9 +1,3 @@
-// TaskBoard.jsx
-// Board view: three columns (To Do, In Progress, Done).
-//   - "+ Add task" at the bottom of each column
-//   - clicking a card opens the task form
-//   - each card has a red delete icon beside the assignee avatar
-
 import { useState } from 'react'
 import useBoardData from '../utils/useBoardData.js'
 import { useParams } from 'react-router-dom'
@@ -27,7 +21,6 @@ import {
 } from '../utils/helpers.js'
 import './TaskBoard.css'
 
-// The three columns of the board
 const COLUMNS = [
   { status: 'todo', name: 'To Do' },
   { status: 'in-progress', name: 'In Progress' },
@@ -36,8 +29,6 @@ const COLUMNS = [
 
 function TaskBoard() {
   const { pageId } = useParams()
-
-  // Data
   const [reloadCount, setReloadCount] = useState(0)
   const { page, tasks, users, currentUser, setTasks, hasLoaded, loadError } = useBoardData(pageId, reloadCount)
   const canEditTasks = Boolean(currentUser && page && (
@@ -45,15 +36,10 @@ function TaskBoard() {
     page.members?.some((member) => member.user === currentUser._id && member.role === 'editor')
   ))
 
-
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
-
-  // "+ Add task": the status of the column being added to, or ''
   const [addingStatus, setAddingStatus] = useState('')
   const [newTitle, setNewTitle] = useState('')
   const [newTitleError, setNewTitleError] = useState('')
-
-  // Pop-up windows
   const [formTask, setFormTask] = useState(null)
   const [taskToDelete, setTaskToDelete] = useState(null)
   const [isShareOpen, setIsShareOpen] = useState(false)
@@ -62,7 +48,6 @@ function TaskBoard() {
     setReloadCount((count) => count + 1)
   }
 
-  // ---------- Create ----------
   function startAdding(status) {
     setAddingStatus(status)
     setNewTitle('')
@@ -82,7 +67,6 @@ function TaskBoard() {
     showToast('Task added')
   }
 
-  // ---------- Update ----------
   async function handleSaveTask(taskData) {
     if (taskData._id) {
       const savedTask = await updateTask(pageId, taskData._id, taskData)
@@ -96,7 +80,6 @@ function TaskBoard() {
     setFormTask(null)
   }
 
-  // ---------- Delete ----------
   async function handleConfirmDelete() {
     await deleteTask(pageId, taskToDelete._id)
     setTasks((items) => items.filter((item) => item._id !== taskToDelete._id))
@@ -181,8 +164,6 @@ function TaskBoard() {
               })}
 
               {columnTasks.length === 0 && !isAddingHere && <div className="board-empty">No tasks here.</div>}
-
-              {/* "+ Add task" at the bottom of the column */}
               {isAddingHere ? (
                 <div className="board-card board-add-card">
                   <input
@@ -222,7 +203,6 @@ function TaskBoard() {
         })}
       </div>
 
-      {/* Pop-up windows */}
       {formTask && (
         <TaskForm readOnly={!canEditTasks}
           key={formTask._id || 'new'}

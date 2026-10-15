@@ -1,17 +1,9 @@
-// TaskHeader.jsx
-// The top part shared by the List, Board and Calendar views:
-//   - page name (and for shared pages: member avatars + Share button)
-//   - the view switcher
-//   - filter and sort controls
-
 import ViewSwitcher from './ViewSwitcher.jsx'
 import { getInitials, DEFAULT_FILTERS } from '../utils/helpers.js'
 import './TaskHeader.css'
 
 function TaskHeader({ page, users, filters, onFiltersChange, onShareClick }) {
   const isShared = page.type === 'shared'
-
-  // Change one filter and keep the others as they are
   function changeFilter(name, value) {
     onFiltersChange({ ...filters, [name]: value })
   }
@@ -26,7 +18,6 @@ function TaskHeader({ page, users, filters, onFiltersChange, onShareClick }) {
           <h1 className="page-title">{page.name}</h1>
         </div>
 
-        {/* Member avatars and the Share button are only for shared pages */}
         {isShared && (
           <div className="row">
             <div className="task-header-avatars">

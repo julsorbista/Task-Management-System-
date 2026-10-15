@@ -11,8 +11,6 @@ function Login() {
 
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
-
-  // Error messages shown under the fields
   const [identifierError, setIdentifierError] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [otp, setOtp] = useState('')
@@ -69,10 +67,9 @@ function Login() {
   }
 
   async function handleSubmit(event) {
-    event.preventDefault() // stop the browser from reloading the page
+    event.preventDefault() 
     if (isSubmitting) return
 
-    // 1. Check the fields
     let newIdentifierError = ''
     let newPasswordError = ''
     const trimmedIdentifier = identifier.trim()
@@ -88,7 +85,6 @@ function Login() {
     setPasswordError(newPasswordError)
     if (newIdentifierError || newPasswordError) return
 
-    // 2. Check the password and request an OTP
     setIsSubmitting(true)
     try {
       const challenge = await login(trimmedIdentifier, password)

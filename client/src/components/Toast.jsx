@@ -1,13 +1,3 @@
-// Toast.jsx
-// Success messages ("toasts") at the top center of the screen,
-// for example "Task added". Each one slides down from the top,
-// closes by itself after 3 seconds, or right away with the X button.
-// When there are several, they stack downward.
-//
-// App.jsx shows <ToastList /> once. To show a message from any file:
-//   import { showToast } from '../utils/toast.js'
-//   showToast('Task added')
-
 import { useState, useEffect } from 'react'
 import Icon from './Icon.jsx'
 import { connectToastList } from '../utils/toast.js'
@@ -19,8 +9,6 @@ function Toast({ text, onClose }) {
   useEffect(() => {
     const timer = setTimeout(onClose, 3000)
     return () => clearTimeout(timer)
-    // onClose is left out on purpose, so the timer starts only once
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -36,12 +24,9 @@ function Toast({ text, onClose }) {
   )
 }
 
-// All messages on screen, newest at the bottom of the stack
 function ToastList() {
   // Each toast looks like { id: 1, text: 'Task added' }
   const [toasts, setToasts] = useState([])
-
-  // Let showToast() add messages to this list
   useEffect(() => {
     let nextId = 1
     connectToastList((text) => {

@@ -1,7 +1,3 @@
-// Profile.jsx
-// View and edit your name, photo, email and password.
-// Also: delete your account, and log out.
-
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout.jsx'
@@ -15,22 +11,15 @@ import { workspaceSnapshot } from '../utils/workspaceSnapshot.js'
 
 function Profile() {
   const navigate = useNavigate()
-
-  // Profile fields
   const [name, setName] = useState(workspaceSnapshot.user?.name || '')
   const [username, setUsername] = useState(workspaceSnapshot.user?.username || '')
   const [email, setEmail] = useState(workspaceSnapshot.user?.email || '')
   const [photo, setPhoto] = useState(workspaceSnapshot.user?.photo || '')
-  const [newPhoto, setNewPhoto] = useState('') // picked but not saved yet ('' = none)
+  const [newPhoto, setNewPhoto] = useState('') 
   const [profileErrors, setProfileErrors] = useState({})
-
-  // The name and email as last saved. The "Save changes" button
-  // only shows when the fields are different from these.
   const [savedName, setSavedName] = useState(workspaceSnapshot.user?.name || '')
   const [savedUsername, setSavedUsername] = useState(workspaceSnapshot.user?.username || '')
   const [savedEmail, setSavedEmail] = useState(workspaceSnapshot.user?.email || '')
-
-  // Password fields
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -39,14 +28,10 @@ function Profile() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
   const [isConfirmingRemovePhoto, setIsConfirmingRemovePhoto] = useState(false)
-
-  // Goes up after a save, so the sidebar shows the new name and photo
   const [savedCount, setSavedCount] = useState(0)
 
-  // Fill the form with the logged-in user's details
   useEffect(() => {
     async function loadUser() {
       const user = await getCurrentUser()
@@ -62,12 +47,9 @@ function Profile() {
     loadUser()
   }, [])
 
-  // ---------- Photo ----------
-  // Read the picked image file as text (a "data URL") and show it as a preview.
-  // It is saved only when "Save changes" (below the email field) is clicked.
   function handlePhotoPicked(event) {
     const file = event.target.files[0]
-    event.target.value = '' // so the same file can be picked again later
+    event.target.value = '' 
     if (!file) return
     const reader = new FileReader()
     reader.onload = () => {
@@ -76,18 +58,15 @@ function Profile() {
     reader.readAsDataURL(file)
   }
 
-  // Runs after "Remove" is clicked in the confirmation
   async function handleRemovePhoto() {
     setIsConfirmingRemovePhoto(false)
     setPhoto('')
-    setNewPhoto('') // also drop a new photo that was not saved yet
+    setNewPhoto('') 
     await updateProfile({ photo: '' })
     showToast('Photo removed')
     setSavedCount(savedCount + 1)
   }
 
-  // ---------- Name and email ----------
-  // True when a new photo, the name or the email was changed and not saved yet
   const hasProfileChanges = newPhoto !== '' || name !== savedName || username !== savedUsername || email !== savedEmail
 
   async function handleSaveProfile() {
@@ -111,14 +90,12 @@ function Profile() {
       return
     }
 
-    // Save the new photo too, if one was picked
     if (newPhoto !== '') {
       await updateProfile({ photo: newPhoto })
       setPhoto(newPhoto)
       setNewPhoto('')
     }
 
-    // Remember the saved values, so the button hides again
     setName(name.trim())
     setUsername(username.trim())
     setEmail(email.trim())
@@ -129,7 +106,6 @@ function Profile() {
     setSavedCount(savedCount + 1)
   }
 
-  // ---------- Password ----------
   async function handleSavePassword() {
     if (isSavingPassword) return
     const newErrors = {}
@@ -156,7 +132,6 @@ function Profile() {
     }
   }
 
-  // ---------- Delete account ----------
   async function handleDeleteAccount() {
     await deleteAccount()
     navigate('/login')
@@ -167,16 +142,12 @@ function Profile() {
     <Layout reloadSignal={savedCount}>
       <div className="profile">
         <h1 className="page-title profile-title">Profile</h1>
-
-        {/* Photo, name and email */}
         <div className="panel">
           <div className="profile-photo-row">
             <span className="avatar profile-avatar">
               {/* Shows the new photo as a preview until it is saved */}
               {newPhoto || photo ? <img src={newPhoto || photo} alt="Profile" /> : getInitials(name)}
             </span>
-
-            {/* The real file input is hidden; the label looks like a button */}
             <label className="btn">
               Change photo
               <input type="file" accept="image/*" className="visually-hidden" onChange={handlePhotoPicked} />
@@ -229,8 +200,6 @@ function Profile() {
             />
             {profileErrors.email && <div className="error-text">{profileErrors.email}</div>}
           </div>
-
-          {/* Shown only after a new photo was picked or the name/email was changed */}
           {hasProfileChanges && (
             <div className="row">
               <button type="button" className="btn btn-primary" onClick={handleSaveProfile}>
@@ -323,8 +292,7 @@ function Profile() {
             </button>
           </div>
         </div>
-
-        {/* Delete account */}
+        
         <div className="panel profile-panel">
           <div className="section-title">Delete account</div>
           <p className="muted profile-delete-text">
@@ -346,7 +314,6 @@ function Profile() {
           onCancel={() => setIsConfirmingDelete(false)}
         />
       )}
-
 
       {isConfirmingRemovePhoto && (
         <ConfirmDelete

@@ -1,7 +1,6 @@
 import { workspaceSnapshot } from '../utils/workspaceSnapshot.js'
 import ViewSwitcher from './ViewSwitcher.jsx'
 
-// Render the destination's structure while its first response is pending.
 export default function WorkspacePlaceholder({ pageId }) {
   const page = workspaceSnapshot.pages.find((item) => item._id === pageId)
   return (

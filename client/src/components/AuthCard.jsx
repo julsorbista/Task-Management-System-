@@ -1,7 +1,3 @@
-// AuthCard.jsx
-// The centered white card used by every auth screen (log in, register, ...).
-// It shows the Morrow logo, a heading, a short line of text, and then
-// whatever the page puts inside it (the "children").
 
 import Icon from './Icon.jsx'
 import './AuthCard.css'

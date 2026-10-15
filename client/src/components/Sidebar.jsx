@@ -1,7 +1,3 @@
-// Sidebar.jsx
-// The left sidebar: logo, close button, search, Dashboard tab,
-// Private and Shared pages, and the user's name with a log out button.
-
 import { useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Icon from './Icon.jsx'
@@ -15,27 +11,18 @@ import './Sidebar.css'
 function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChanged }) {
   const navigate = useNavigate()
   const location = useLocation()
-
-  // Search box
   const [searchText, setSearchText] = useState('')
-
-  // Adding a page: '' (not adding), 'private' or 'shared'
   const [addingType, setAddingType] = useState('')
   const [newPageName, setNewPageName] = useState('')
   const [isSavingPage, setIsSavingPage] = useState(false)
   const createInFlight = useRef(false)
-
-  // Renaming a page: the id of the page being renamed, or ''
   const [renamingPageId, setRenamingPageId] = useState('')
   const [renameText, setRenameText] = useState('')
   const [pageError, setPageError] = useState('')
   const [isSavingRename, setIsSavingRename] = useState(false)
   const renameInFlight = useRef(false)
-
-  // The page waiting for a delete confirmation, or null
   const [pageToDelete, setPageToDelete] = useState(null)
   const [isConfirmingLogout, setIsConfirmingLogout] = useState(false)
-
   const privatePages = pages.filter((page) => page.type === 'private')
   const sharedPages = pages.filter((page) => page.type === 'shared')
 
@@ -57,7 +44,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
     navigate('/pages/' + task.page + '/list?task=' + task._id)
   }
 
-  // Text under each search result, for example "Private · My tasks · Today 4:00 PM"
   function describeResult(task) {
     const page = pages.find((p) => p._id === task.page)
     let text = (page.type === 'shared' ? 'Shared' : 'Private') + ' · ' + page.name
@@ -66,7 +52,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
     return text
   }
 
-  // ---------- Add a page ----------
   function startAdding(type) {
     setPageError('')
     setAddingType(type)
@@ -96,7 +81,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
     }
   }
 
-  // ---------- Rename a page ----------
   function startRenaming(page) {
     setPageError('')
     setRenamingPageId(page._id)
@@ -125,7 +109,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
     }
   }
 
-  // ---------- Delete a page ----------
   async function confirmDeletePage() {
     const deletedId = pageToDelete._id
     await deletePage(deletedId)
@@ -133,7 +116,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
     setPageToDelete(null)
     showToast('Page deleted')
 
-    // If we were looking at the deleted page, go somewhere else
     if (location.pathname.startsWith('/pages/' + deletedId + '/')) {
       const otherPage = pages.find((page) => page._id !== deletedId)
       if (otherPage) navigate('/pages/' + otherPage._id + '/list')
@@ -141,22 +123,18 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
     }
   }
 
-  // ---------- Log out ----------
   async function handleLogout() {
     setIsConfirmingLogout(false)
     await logout()
     navigate('/login')
   }
 
-  // How many tasks on a page are not done yet (shown next to the page name)
   function countOpenTasks(pageId) {
     return tasks.filter((task) => task.page === pageId && task.status !== 'done').length
   }
 
-  // Draw the list of pages for one section. Used for both Private and Shared.
   function renderPages(pageList) {
     return pageList.map((page) => {
-      // This page is being renamed: show an input instead of the link
       if (renamingPageId === page._id) {
         return (
           <div className="sidebar-page" key={page._id}>
@@ -205,7 +183,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
     })
   }
 
-  // The input shown at the end of a section while adding a page
   function renderNewPageInput() {
     return (
       <div className="sidebar-page">
@@ -232,7 +209,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
 
   return (
     <nav className={isOpen ? 'sidebar' : 'sidebar closed'} aria-label="Workspace">
-      {/* Top row: logo and the close button */}
       <div className="sidebar-top">
         <div className="sidebar-logo">
           <Icon name="logo" />
@@ -243,7 +219,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
         </button>
       </div>
 
-      {/* Search */}
       <div className="sidebar-search">
         <Icon name="search" />
         <label className="visually-hidden" htmlFor="sidebar-search">
@@ -259,7 +234,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
           onChange={(event) => setSearchText(event.target.value)}
         />
 
-        {/* Results appear as you type */}
         {query !== '' && (
           <div className="sidebar-results">
             {searchResults.slice(0, 8).map((task) => (
@@ -278,7 +252,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
         )}
       </div>
 
-      {/* Dashboard tab */}
       <nav className="sidebar-navigation" aria-label="Workspace navigation">
       {pageError && <p className="error-text" role="alert">{pageError}</p>}
       <div className="sidebar-dashboard">
@@ -293,8 +266,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
       </div>
 
       <div className="sidebar-divider"></div>
-
-      {/* Private section */}
       <div className="sidebar-section">
         <Icon name="lock" />
         Private
@@ -311,7 +282,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
       {renderPages(privatePages)}
       {addingType === 'private' && renderNewPageInput()}
 
-      {/* Shared section */}
       <div className="sidebar-section sidebar-section-gap">
         <Icon name="users" />
         Shared
@@ -329,7 +299,6 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
       {addingType === 'shared' && renderNewPageInput()}
       </nav>
 
-      {/* Bottom row: the user (opens Profile) and the log out button */}
       <div className="sidebar-user">
         <Link
           to="/profile"

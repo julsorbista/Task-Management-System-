@@ -1,6 +1,3 @@
-// Register.jsx
-// Registration screen: name, email, password, confirm password.
-
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard.jsx'
@@ -17,8 +14,6 @@ function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-
-  // One object holds the error message of each field
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -26,7 +21,6 @@ function Register() {
   async function handleSubmit(event) {
     event.preventDefault()
 
-    // 1. Check every field and collect the error messages
     const newErrors = {}
     if (name.trim() === '') newErrors.name = 'Enter your name.'
     if (username.trim() === '') newErrors.username = 'Enter your username.'
@@ -43,7 +37,6 @@ function Register() {
     setErrors(newErrors)
     if (Object.keys(newErrors).length > 0) return
 
-    // 2. Create the account, then ask the user to log in with OTP
     try {
       await register(name, username, email, password)
       showToast('Account created. Please log in.')

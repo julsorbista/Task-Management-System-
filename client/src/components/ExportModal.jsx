@@ -1,9 +1,3 @@
-// ExportModal.jsx
-// Export options, opened from the Export button on the Dashboard:
-//   - CSV or PDF
-//   - All tasks or Selected tasks (with a task picker)
-//   - Private / Shared scope
-
 import { useState } from 'react'
 import Icon from './Icon.jsx'
 import { showToast } from '../utils/toast.js'
@@ -14,20 +8,18 @@ import './ExportModal.css'
 
 function ExportModal({ tasks, pages, users, onClose }) {
 
-  const [format, setFormat] = useState('csv') // 'csv' or 'pdf'
-  const [mode, setMode] = useState('all') // 'all' or 'selected'
-  const [scope, setScope] = useState('both') // 'both', 'private' or 'shared'
+  const [format, setFormat] = useState('csv') 
+  const [mode, setMode] = useState('all') 
+  const [scope, setScope] = useState('both') 
   const [searchText, setSearchText] = useState('')
-  const [selectedIds, setSelectedIds] = useState([]) // ids of the ticked tasks
+  const [selectedIds, setSelectedIds] = useState([]) 
   const [isExporting, setIsExporting] = useState(false)
   const [exportError, setExportError] = useState('')
 
-  // Find the page of a task (to know if it is Private or Shared)
   function getPageOf(task) {
     return pages.find((page) => page._id === task.page)
   }
 
-  // 1. Tasks that match the scope
   const matchingTasks = tasks.filter((task) => {
     const page = getPageOf(task)
     if (!page) return false
@@ -36,27 +28,22 @@ function ExportModal({ tasks, pages, users, onClose }) {
     return true
   })
 
-  // 2. In the picker, the search narrows the list further
   const query = searchText.trim().toLowerCase()
   const listedTasks = matchingTasks.filter((task) => {
     if (query === '') return true
     return (task.title + ' ' + task.description).toLowerCase().includes(query)
   })
 
-  // 3. The tasks that will really be exported
   const selectedTasks = matchingTasks.filter((task) => selectedIds.includes(task._id))
   const tasksToExport = mode === 'selected' ? selectedTasks : matchingTasks
   const exportCount = tasksToExport.length
 
   const areAllListedSelected = listedTasks.length > 0 && listedTasks.every((task) => selectedIds.includes(task._id))
 
-  // Tick or untick one task
   function toggleTask(taskId) {
     if (selectedIds.includes(taskId)) setSelectedIds(selectedIds.filter((id) => id !== taskId))
     else setSelectedIds([...selectedIds, taskId])
   }
-
-  // "Select all": tick (or untick) every task in the list
   function toggleAll() {
     const listedIds = listedTasks.map((task) => task._id)
     if (areAllListedSelected) {
@@ -66,10 +53,6 @@ function ExportModal({ tasks, pages, users, onClose }) {
       setSelectedIds([...selectedIds, ...newIds])
     }
   }
-
-  // ---------- Build the files ----------
-
-  // The rows of the export: one list of text values per task
   function buildRows() {
     return tasksToExport.map((task) => {
       const page = getPageOf(task)
@@ -87,12 +70,8 @@ function ExportModal({ tasks, pages, users, onClose }) {
       ]
     })
   }
-
   const COLUMN_NAMES = ['Title', 'Description', 'Due date', 'Due time', 'Priority', 'Status', 'Page', 'Scope', 'Assignee']
-
-  // CSV: text with commas between values. The browser downloads it as a file.
   function downloadCsv(user) {
-    // Wrap each value in quotes so commas inside a value do not break the file
     function quote(value) {
       let text = String(value ?? '')
       if (/^[\s]*[=+@-]|^[\t\r\n]/.test(text)) text = "'" + text
@@ -107,16 +86,12 @@ function ExportModal({ tasks, pages, users, onClose }) {
     ].map((row) => Array.from({ length: COLUMN_NAMES.length }, (_, index) => row[index] ?? ''))
     const lines = [...heading, COLUMN_NAMES, ...buildRows()].map((row) => row.map(quote).join(','))
     const file = new Blob(['\uFEFF', lines.join('\r\n')], { type: 'text/csv;charset=utf-8' })
-
-    // Make a temporary link to the file and click it
     const link = document.createElement('a')
     link.href = URL.createObjectURL(file)
     link.download = 'morrow-tasks.csv'
     link.click()
     URL.revokeObjectURL(link.href)
   }
-
-  // Generate the PDF directly so browser print headers are never included.
   async function handleExport() {
     if (isExporting) return
     setIsExporting(true)
@@ -138,11 +113,8 @@ function ExportModal({ tasks, pages, users, onClose }) {
       setIsExporting(false)
     }
   }
-
-  // Text beside the Export button, for example "5 tasks selected"
   let countText = exportCount + (exportCount === 1 ? ' task' : ' tasks')
   countText += mode === 'selected' ? ' selected' : ' will be exported'
-
   return (
     <div className="overlay">
       <div className="modal" role="dialog" aria-label="Export tasks">
@@ -153,7 +125,6 @@ function ExportModal({ tasks, pages, users, onClose }) {
           </button>
         </div>
 
-        {/* Format */}
         <div className="field">
           <span className="label">Format</span>
           <div className="row">
@@ -176,7 +147,6 @@ function ExportModal({ tasks, pages, users, onClose }) {
           </div>
         </div>
 
-        {/* All tasks or Selected tasks */}
         <div className="field">
           <span className="label">Tasks</span>
           <div className="row">
@@ -193,7 +163,6 @@ function ExportModal({ tasks, pages, users, onClose }) {
           </div>
         </div>
 
-        {/* Task picker: only when "Selected tasks" is chosen */}
         {mode === 'selected' && (
           <div className="field">
             <div className="export-picker-top">
@@ -235,7 +204,6 @@ function ExportModal({ tasks, pages, users, onClose }) {
           </div>
         )}
 
-        {/* Scope */}
         <div className="field">
           <span className="label">Scope</span>
           <div className="row">
@@ -261,7 +229,6 @@ function ExportModal({ tasks, pages, users, onClose }) {
 
         {exportError && <p role="alert" className="error-text">{exportError}</p>}
 
-        {/* Footer: count, Cancel, Export */}
         <div className="export-footer">
           <span className="muted export-count">{countText}</span>
           <button type="button" className="btn" onClick={onClose}>

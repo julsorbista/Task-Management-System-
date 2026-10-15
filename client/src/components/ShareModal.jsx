@@ -148,7 +148,7 @@ function ShareModal({ page, pageId, users, currentUser, onClose, onChanged }) {
           <p className="small-text">Access starts after the recipient accepts the email invitation.</p>
         </>}
 
-        {/* People with access */}
+        {                        }
         <span className="label share-people-label">
           People with access
         </span>

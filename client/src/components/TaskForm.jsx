@@ -79,7 +79,7 @@ function TaskForm({ task, page, users, onSave, onCancel, readOnly = false }) {
         </div>
 
         <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-        {/* Title */}
+        {           }
         <div className="field">
           <label className="label" htmlFor="task-title">
             Title

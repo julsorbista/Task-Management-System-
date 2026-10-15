@@ -57,7 +57,7 @@ function TaskCalendar() {
     setMonth(new Date().getMonth())
   }
 
-  // ---------- Update ----------
+                                 
   async function handleSaveTask(taskData) {
     if (taskData._id) {
       const savedTask = await updateTask(pageId, taskData._id, taskData)
@@ -89,7 +89,7 @@ function TaskCalendar() {
   const today = todayString()
   const firstOfMonth = new Date(year, month, 1)
   const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const daysBeforeFirst = firstOfMonth.getDay() // 0 = Sunday
+  const daysBeforeFirst = firstOfMonth.getDay()              
   const numberOfCells = daysBeforeFirst + daysInMonth > 35 ? 42 : 35
 
   const days = []

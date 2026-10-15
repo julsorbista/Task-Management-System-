@@ -73,7 +73,7 @@ router.post('/login', async (req, res, next) => {
       return res.json({ otpRequired: false, user: hidePassword(user) })
     }
 
-    // Reserve the cooldown in MongoDB, shared by every deployed instance.
+                                                                          
     const reserved = await User.findOneAndUpdate({
       _id: user._id,
       $or: [{ lastOtpSentAt: null }, { lastOtpSentAt: { $lte: new Date(Date.now() - 60000) } }],

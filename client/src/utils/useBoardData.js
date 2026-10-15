@@ -39,7 +39,7 @@ export default function useBoardData(pageId, reloadCount) {
         setState({ pageId, data: fresh, error: '' })
       }).catch((error) => {
         if (!active) return
-        // Discard cached content when access has been revoked.
+                                                               
         delete workspaceSnapshot.boards[pageId]
         setState({ pageId, data: null, error: error.message || 'Failed to load tasks.' })
       })

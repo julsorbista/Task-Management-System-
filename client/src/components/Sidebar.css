@@ -1,4 +1,4 @@
-/* Sidebar.css */
+
 
 .sidebar {
   width: 236px;
@@ -12,7 +12,7 @@
   background: var(--bg);
   position: relative;
   z-index: 35;
-  /* Short slide animation when it opens and closes */
+
   transition: margin-left 0.22s ease;
 }
 
@@ -29,7 +29,7 @@
   flex-shrink: 0;
 }
 
-/* Closed: slide it out of view to the left */
+
 .sidebar.closed {
   margin-left: -236px;
   visibility: hidden;
@@ -38,7 +38,7 @@
     visibility 0s 0.22s;
 }
 
-/* ---------- Top row ---------- */
+
 .sidebar-top {
   display: flex;
   align-items: center;
@@ -62,7 +62,7 @@
   stroke-width: 2;
 }
 
-/* ---------- Search ---------- */
+
 .sidebar-search {
   position: relative;
   margin-top: 12px;
@@ -80,7 +80,7 @@
   padding-left: 34px;
 }
 
-/* Drop-down with the search results (wider than the sidebar) */
+
 .sidebar-results {
   position: absolute;
   left: 0;
@@ -113,7 +113,7 @@
   font-weight: 500;
 }
 
-/* ---------- Links ---------- */
+
 .sidebar-dashboard {
   margin-top: 12px;
 }
@@ -146,14 +146,14 @@
   color: var(--accent);
 }
 
-/* The page you are on */
+
 .sidebar-link.active {
   background: var(--tint);
   color: var(--accent);
   font-weight: 600;
 }
 
-/* Number of open tasks, on the right */
+
 .sidebar-count {
   margin-left: auto;
   flex: none;
@@ -164,14 +164,14 @@
   color: var(--muted);
 }
 
-/* Thin gray line under the Dashboard tab */
+
 .sidebar-divider {
   height: 1px;
   background: var(--line);
   margin: 8px 10px;
 }
 
-/* ---------- Private / Shared sections ---------- */
+
 .sidebar-section {
   display: flex;
   align-items: center;
@@ -193,7 +193,7 @@
   margin-top: 22px;
 }
 
-/* The small plus button beside the section label */
+
 .sidebar-add {
   margin-left: auto;
   width: 26px;
@@ -205,7 +205,7 @@
   height: 16px;
 }
 
-/* One page: the link and its three-dot button */
+
 .sidebar-page {
   position: relative;
   display: flex;
@@ -217,7 +217,7 @@
   padding-right: 42px;
 }
 
-/* The three-dot button only shows when the mouse is over the page */
+
 .sidebar-page-more {
   position: absolute;
   right: 6px;
@@ -231,7 +231,7 @@
   opacity: 1;
 }
 
-/* Touch screens have no hover, so always show it there */
+
 @media (hover: none) {
   .sidebar-page-more {
     opacity: 1;
@@ -242,12 +242,12 @@
   height: 34px;
 }
 
-/* ---------- User row at the bottom ---------- */
+
 .sidebar-user {
   display: flex;
   align-items: center;
   gap: 2px;
-  margin-top: auto; /* pushes this row to the bottom */
+  margin-top: auto;                                    
   padding-top: 20px;
 }
 
@@ -255,7 +255,7 @@
   min-height: 44px;
 }
 
-/* ---------- Phones: the sidebar slides in on top of the page ---------- */
+
 @media (max-width: 760px) {
   .sidebar,
   .sidebar.closed {
@@ -284,7 +284,7 @@
   }
 }
 
-/* "No results" message inside the search drop-down */
+
 .sidebar-no-results {
   padding: 28px 16px;
 }

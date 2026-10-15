@@ -1,4 +1,4 @@
-/* Profile.css */
+
 
 .profile {
   max-width: 640px;
@@ -8,7 +8,7 @@
   margin-bottom: 24px;
 }
 
-/* Space between the boxes */
+
 .profile-panel {
   margin-top: 16px;
 }
@@ -17,7 +17,7 @@
   margin-bottom: 16px;
 }
 
-/* Big avatar with the "Change photo" button */
+
 .profile-photo-row {
   display: flex;
   flex-wrap: wrap;

@@ -31,7 +31,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' })
 })
 
-// Every deployed API request waits for the shared MongoDB connection.
+                                                                      
 app.use('/api', async (req, res, next) => {
   try {
     await connectDatabase()

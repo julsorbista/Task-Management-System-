@@ -1,4 +1,4 @@
-/* TaskCalendar.css - the calendar view */
+                                          
 
 .calendar-bar {
   margin-bottom: 12px;
@@ -12,12 +12,12 @@
   margin-left: auto;
 }
 
-/* Lets the calendar scroll sideways on small screens */
+                                                        
 .calendar-box {
   overflow-x: auto;
 }
 
-/* Seven equal columns, one per weekday */
+                                          
 .calendar {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -34,7 +34,7 @@
   border-bottom: 1px solid var(--line);
 }
 
-/* One day */
+             
 .calendar-day {
   min-height: 108px;
   padding: 6px;
@@ -43,7 +43,7 @@
   border-bottom: 1px solid var(--line);
 }
 
-/* Days that belong to the month before or after */
+                                                   
 .calendar-day.other-month {
   background: var(--bg);
 }
@@ -62,14 +62,14 @@
   font-size: 12.5px;
 }
 
-/* Today gets a filled circle */
+                                
 .calendar-number.today {
   background: var(--accent);
   color: var(--on-accent);
   font-weight: 600;
 }
 
-/* One task inside a day */
+                           
 .calendar-task {
   display: block;
   width: 100%;
@@ -99,7 +99,7 @@
   color: var(--muted);
 }
 
-/* The due time shown before the title */
+                                         
 .calendar-time {
   margin-right: 5px;
   color: var(--muted);

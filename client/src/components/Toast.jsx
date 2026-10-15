@@ -3,9 +3,9 @@ import Icon from './Icon.jsx'
 import { connectToastList } from '../utils/toast.js'
 import './Toast.css'
 
-// One message
+
 function Toast({ text, onClose }) {
-  // Close after 3 seconds
+
   useEffect(() => {
     const timer = setTimeout(onClose, 3000)
     return () => clearTimeout(timer)
@@ -25,7 +25,7 @@ function Toast({ text, onClose }) {
 }
 
 function ToastList() {
-  // Each toast looks like { id: 1, text: 'Task added' }
+
   const [toasts, setToasts] = useState([])
   useEffect(() => {
     let nextId = 1

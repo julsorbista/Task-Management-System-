@@ -1,4 +1,4 @@
-/* Notifications.css */
+
 
 .notifications {
   max-width: 820px;
@@ -22,7 +22,7 @@
   letter-spacing: -0.01em;
 }
 
-/* All / Unread pill toggle */
+
 .notifications-toggle {
   display: inline-flex;
   margin-top: 14px;
@@ -61,13 +61,13 @@
   text-decoration: none;
 }
 
-/* ---------- List ---------- */
+
 .notifications-list {
   border-top: 1px solid var(--line);
 }
 
-/* Fixed columns, so nothing moves on hover or when marking as read:
-   dot | icon | message (the rest of the space) | time | action link */
+
+
 .notification {
   display: grid;
   grid-template-columns: 7px 34px minmax(0, 1fr) 90px 104px;
@@ -81,8 +81,8 @@
   background: var(--faint);
 }
 
-/* Small dot: filled for unread, invisible for read.
-   Its space is kept on every row, so messages always start in the same place. */
+
+
 .notification-dot {
   width: 7px;
   height: 7px;
@@ -105,7 +105,7 @@
   place-items: center;
 }
 
-/* Message + related task name: one button that opens the task */
+
 .notification-open {
   min-width: 0;
   padding: 2px 0;
@@ -116,13 +116,13 @@
 
 .notification-message {
   display: block;
-  /* One line, so bold (unread) text can never wrap and change the row height */
+
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Unread ones are slightly bolder */
+
 .notification-message.unread {
   font-weight: 600;
 }
@@ -131,7 +131,7 @@
   display: block;
 }
 
-/* Right-aligned, so every row's time lines up in one column */
+
 .notification-time {
   white-space: nowrap;
   text-align: right;
@@ -139,9 +139,9 @@
   text-overflow: ellipsis;
 }
 
-/* "Mark as read" only shows when the mouse is over the row.
-   It is hidden with opacity, so its column always keeps its space.
-   The column (104px) stays reserved on read rows too, where the link is gone. */
+
+
+
 .notification-mark {
   font-size: 12.5px;
   white-space: nowrap;
@@ -155,14 +155,14 @@
   opacity: 1;
 }
 
-/* Touch screens have no hover, so always show it there */
+
 @media (hover: none) {
   .notification-mark {
     opacity: 1;
   }
 }
 
-/* ---------- Empty state ---------- */
+
 .notifications-empty {
   padding: 72px 16px;
 }
@@ -182,8 +182,8 @@
   stroke-linejoin: round;
 }
 
-/* Phones: the action link moves to a second line under the message,
-   still with its own fixed place */
+
+
 @media (max-width: 760px) {
   .notification {
     grid-template-columns: 7px 34px minmax(0, 1fr) 80px;

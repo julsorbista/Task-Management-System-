@@ -125,14 +125,14 @@ function TaskBoard() {
                 <span className="small-text">{columnTasks.length}</span>
               </div>
 
-              {/* One card per task */}
+              {                       }
               {columnTasks.map((task) => {
                 const assignee = users.find((user) => user._id === task.assignee)
                 const isDone = task.status === 'done'
 
                 return (
                   <div className="board-card" key={task._id}>
-                    {/* Clicking anywhere on the card opens the form */}
+                    {                                                  }
                     <button type="button" className="board-card-open" onClick={() => setFormTask(task)}>
                       <span className={isDone ? 'board-card-title done' : 'board-card-title'}>{task.title}</span>
                     </button>
@@ -141,7 +141,7 @@ function TaskBoard() {
                       <span className={'chip chip-' + task.priority}>{PRIORITY_LABELS[task.priority]}</span>
                       <span className={isOverdue(task) ? 'due overdue' : 'due'}>{formatDue(task)}</span>
 
-                      {/* Assignee avatar and the red delete icon, side by side */}
+                      {                                                           }
                       <span className="board-card-right">
                         {assignee && (
                           <span className="avatar" title={assignee.name}>

@@ -33,7 +33,7 @@ function safeUserSummary(user) {
   }
 }
 
-// Get users who share at least one visible board with the logged-in user.
+                                                                          
 async function getUsers(req, res, next) {
   if (!validateAuthenticatedUser(req, res)) return
 
@@ -92,7 +92,7 @@ async function getUsers(req, res, next) {
   }
 }
 
-// Get the logged-in user's profile.
+                                    
 async function getCurrentUser(req, res, next) {
   if (!validateAuthenticatedUser(req, res)) return
 
@@ -109,7 +109,7 @@ async function getCurrentUser(req, res, next) {
   }
 }
 
-// Update only the logged-in user's basic profile fields.
+                                                         
 async function updateCurrentUser(req, res, next) {
   if (!validateAuthenticatedUser(req, res)) return
 

@@ -17,7 +17,7 @@ export default function Invitation() {
     async function load() {
       if (!/^(?:[a-f0-9]{64}|[a-f0-9]{24})$/.test(token)) { if (active) setError('Invalid invitation link.'); return }
       try {
-        // The invitation endpoint validates the existing session and invited email.
+
         const response = await fetch(`/api/invitations/${token}`, { credentials: 'include' })
         const data = await response.json()
         if (!active) return

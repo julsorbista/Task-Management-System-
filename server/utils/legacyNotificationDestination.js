@@ -1,4 +1,4 @@
-// Only restore exact, unique matches. Never choose a similarly named record.
+                                                                             
 function legacyNotificationDestination(notification, { boards, tasks, invitations = [] }) {
   if (notification.task || notification.page || notification.invitation) return null
   const assigned = /^You were assigned to "([\s\S]+)"\.$/.exec(notification.message || '')

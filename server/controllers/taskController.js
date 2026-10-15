@@ -3,7 +3,7 @@ const Task = require('../models/Task')
 const BoardMember = require('../models/BoardMember')
 const Notification = require('../models/Notification')
 
-// Match the field names expected by the existing frontend.
+                                                           
 function formatTask(task) {
   const data = task.toObject()
 
@@ -18,7 +18,7 @@ function formatTask(task) {
 }
 
 function todayString() {
-  // Use the same project timezone for completion dates.
+                                                        
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Asia/Manila',
     year: 'numeric',
@@ -115,7 +115,7 @@ async function validateAssignee(assignee, req, res) {
     assignee !== '' &&
     String(assignee) !== String(req.board.owner)
   ) {
-    // Private boards can only assign tasks to their owner.
+                                                           
     if (req.board.type !== 'shared') {
       res.status(400).json({
         message: 'Assignee must have access to this board.',
@@ -208,7 +208,7 @@ async function createTask(req, res, next) {
       completedAt: changes.status === 'done' ? todayString() : '',
     })
 
-    // Validate dates, times, status, and priority first.
+                                                         
     await task.validate()
 
     if (!validateTaskRules(task, res)) return

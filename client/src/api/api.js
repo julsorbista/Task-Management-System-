@@ -1,34 +1,34 @@
-// api.js
-// EVERY data function of the app lives in this file.
-//
-// Auth, boards, tasks, and notifications use the backend.
-// Some remaining account operations still use mock data.
-//
-// FOR THE BACKEND DEVELOPER:
-// Each function is "async" and returns the same shape a real API would.
-// Replace the body of each function with a fetch call, for example:
-//
-//   export async function getTasks() {
-//     const response = await fetch('/api/tasks')
-//     return response.json()
-//   }
-//
-// The pages only call these functions, so nothing else needs to change.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 
 import { mockUsers, mockPages, mockTasks } from '../data/mockData.js'
 import { clearWorkspaceSnapshot, workspaceSnapshot, publishWorkspaceChange, publishNotifications } from '../utils/workspaceSnapshot.js'
 
-// ---------- The fake database (kept in memory) ----------
+ 
 let users = makeCopy(mockUsers)
 let pages = makeCopy(mockPages)
 let tasks = makeCopy(mockTasks)
 
-// The logged-in user's id is saved in the browser so a refresh keeps you logged in
+ 
 let currentUserId = localStorage.getItem('morrow-user-id') || ''
 
-// ---------- Small helpers used only inside this file ----------
+ 
 
-// Make a full copy, so pages can never change the "database" by accident
+ 
 function makeCopy(value) {
   return JSON.parse(JSON.stringify(value))
 }
@@ -164,12 +164,12 @@ export async function changePassword(currentPassword, newPassword, confirmPasswo
   return data
 }
 
-// Delete the logged-in user's account, the pages they own and those pages' tasks
+ 
 export async function deleteAccount() {
   const ownedPageIds = pages.filter((p) => p.owner === currentUserId).map((p) => p._id)
   tasks = tasks.filter((t) => !ownedPageIds.includes(t.page))
   pages = pages.filter((p) => p.owner !== currentUserId)
-  // Also leave the shared pages owned by other people
+   
   pages.forEach((p) => {
     p.members = p.members.filter((m) => m.user !== currentUserId)
   })
@@ -268,7 +268,7 @@ export async function updateMemberRole(pageId, userId, role) {
   return readApiJson(response, 'Failed to change member role.')
 }
 
-// Remove a member from a shared page.
+ 
 export async function removeMember(pageId, userId) {
   const response = await fetch(`/api/boards/${pageId}/members/${userId}`, {
     method: 'DELETE',
@@ -402,7 +402,7 @@ export async function updateTask(pageIdOrTaskId, taskIdOrChanges, maybeChanges) 
   return readApiJson(response, 'Failed to update task.')
 }
 
-// Delete a task
+ 
 export async function deleteTask(pageId, taskId) {
   const response = await fetch(`/api/boards/${pageId}/tasks/${taskId}`, {
     method: 'DELETE',

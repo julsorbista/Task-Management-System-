@@ -26,8 +26,8 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
   const privatePages = pages.filter((page) => page.type === 'private')
   const sharedPages = pages.filter((page) => page.type === 'shared')
 
-  // ---------- Search ----------
-  // Find tasks whose title or description contains the typed text
+
+
   const query = searchText.trim().toLowerCase()
   let searchResults = []
   if (query !== '') {
@@ -37,7 +37,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
     })
   }
 
-  // Open the task that was clicked in the search results
+
   function openSearchResult(task) {
     setSearchText('')
     onNavigate()
@@ -329,7 +329,7 @@ function Sidebar({ user, pages, tasks, isOpen, onClose, onNavigate, onDataChange
         />
       )}
 
-      {/* Confirmation before a page is deleted */}
+      {                                           }
       {pageToDelete && (
         <ConfirmDelete
           title={'Delete "' + pageToDelete.name + '"?'}

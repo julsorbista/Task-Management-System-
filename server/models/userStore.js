@@ -1,4 +1,4 @@
-// MongoDB is the shared user store for auth and profile routes.
+                                                                
 const mongoose = require('mongoose')
 const User = require('./User')
 const Board = require('./Board')

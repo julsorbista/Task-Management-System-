@@ -2,9 +2,11 @@
 const mongoose = require('mongoose')
 const Notification = require('../models/Notification')
 const repairLegacyNotifications = require('../utils/repairLegacyNotifications')
+const { deliverTaskReminders } = require('../utils/taskReminders')
 
 async function getNotifications(req, res, next) {
   try {
+    await deliverTaskReminders(req.user.id)
     const notifications = await Notification.find({
       user: req.user.id,
     }).sort({ createdAt: -1 })

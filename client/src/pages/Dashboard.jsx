@@ -100,7 +100,7 @@ function Dashboard() {
       {isLoading && <WorkspacePlaceholder />}
       {loadError && <p role="alert" className="error-text">{loadError}</p>}
       {!isLoading && !loadError && <>
-      {/* Four number tiles */}
+      {                       }
       <div className="dashboard-tiles">
         <div className="panel">
           <div className="small-text">Completed</div>
@@ -121,7 +121,7 @@ function Dashboard() {
       </div>
 
       <div className="two-columns dashboard-charts">
-        {/* Chart 1: standing bars */}
+        {                            }
         <div className="panel">
           <div className="section-title">Tasks completed over time</div>
           <div className="small-text dashboard-chart-note">Per week, last six weeks</div>

@@ -36,7 +36,7 @@ async function createBoard(req, res, next) {
   }
 
   try {
-    // Both records succeed together, or neither is saved.
+                                                          
     const board = await mongoose.connection.transaction(
       async (session) => {
         const [newBoard] = await Board.create(
@@ -182,7 +182,7 @@ async function updateBoard(req, res, next) {
   }
 
   try {
-    // Only rename; do not accept owner or type changes from the body.
+                                                                      
     const board = await Board.findOneAndUpdate(
       { _id: req.board._id, owner: req.user.id },
       { $set: { name: name.trim() } },
@@ -206,8 +206,8 @@ async function deleteBoard(req, res, next) {
 
       await BoardMember.deleteMany({ board: req.board._id }, { session })
       await BoardInvitation.deleteMany({ board: req.board._id }, { session })
-      // Task and ShareLink models must store `board` as an ObjectId.
-      // Use existing collections until those models are implemented.
+                                                                     
+                                                                     
       await mongoose.connection.collection('tasks').deleteMany(
         { board: req.board._id }, { session },
       )

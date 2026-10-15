@@ -52,7 +52,7 @@ export function isOverdue(task) {
   return task.status !== 'done' && task.dueDate !== '' && task.dueDate < todayString()
 }
 
-// "Maya Reyes" -> "MR"
+                       
 export function getInitials(name) {
   if (!name) return '?'
   const words = name.trim().split(' ')
@@ -102,7 +102,7 @@ export function filterAndSortTasks(tasks, filters) {
       return statusOrder[a.status] - statusOrder[b.status]
     }
     if (filters.sort === 'due-latest') {
-      // Tasks without a date still go last
+                                           
       if (!a.dueDate && b.dueDate) return 1
       if (a.dueDate && !b.dueDate) return -1
       return dueKey(b).localeCompare(dueKey(a))

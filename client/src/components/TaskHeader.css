@@ -1,4 +1,4 @@
-/* TaskHeader.css - title row and filter row above the tasks */
+
 
 .task-header {
   display: flex;
@@ -12,7 +12,7 @@
   margin-right: auto;
 }
 
-/* Avatars overlap a little */
+
 .task-header-avatars {
   display: flex;
 }

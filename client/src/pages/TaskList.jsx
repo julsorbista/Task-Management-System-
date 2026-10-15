@@ -92,7 +92,7 @@ function TaskList() {
     closeForm()
   }
 
-  // The checkbox: switch between done and to do
+                                                
   async function handleToggleDone(task) {
     if (!canEditTasks) return
     if (savingTaskIds.includes(task._id)) return

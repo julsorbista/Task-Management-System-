@@ -145,7 +145,7 @@ function Profile() {
         <div className="panel">
           <div className="profile-photo-row">
             <span className="avatar profile-avatar">
-              {/* Shows the new photo as a preview until it is saved */}
+              {                                                        }
               {newPhoto || photo ? <img src={newPhoto || photo} alt="Profile" /> : getInitials(name)}
             </span>
             <label className="btn">
@@ -209,7 +209,7 @@ function Profile() {
           )}
         </div>
 
-        {/* Password */}
+        {              }
         <div className="panel profile-panel">
           <div className="section-title profile-section-title">Password</div>
 

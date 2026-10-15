@@ -19,6 +19,7 @@ const notificationSchema = new mongoose.Schema(
       ref: 'Board',
     },
     task: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
+    reminderKey: { type: String },
     invitation: { type: mongoose.Schema.Types.ObjectId, ref: 'BoardInvitation' },
     message: {
       type: String,
@@ -40,5 +41,7 @@ const notificationSchema = new mongoose.Schema(
     collection: 'notifications',
   },
 )
+
+notificationSchema.index({ reminderKey: 1 }, { unique: true, partialFilterExpression: { reminderKey: { $type: 'string' } } })
 
 module.exports = mongoose.model('Notification', notificationSchema)

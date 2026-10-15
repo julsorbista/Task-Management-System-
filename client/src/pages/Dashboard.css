@@ -14,7 +14,7 @@
   margin-top: 4px;
 }
 
-/* Four tiles in a row */
+
 .dashboard-tiles {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -35,7 +35,7 @@
   margin-bottom: 16px;
 }
 
-/* ---------- Standing bars (completed per week) ---------- */
+
 .week-bars {
   display: flex;
   align-items: flex-end;
@@ -75,9 +75,9 @@
   color: var(--muted);
 }
 
-/* ---------- Lying bars ---------- */
 
-/* One line: label | bar | number */
+
+
 .bar-row {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr) 28px;
@@ -91,7 +91,7 @@
   margin-top: 10px;
 }
 
-/* The gray background of a bar */
+
 .bar-track {
   height: 10px;
   background: var(--faint);
@@ -99,7 +99,7 @@
   overflow: hidden;
 }
 
-/* The colored part of a bar */
+
 .bar-fill {
   display: block;
   height: 100%;

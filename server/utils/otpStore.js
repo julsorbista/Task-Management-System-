@@ -33,7 +33,7 @@ async function verifyOtpChallenge(challengeId, otp) {
   if (!challenge) return { ok: false, reason: 'expired' }
   const otpHash = hashOtp(challengeId, String(otp).trim())
   if (!crypto.timingSafeEqual(Buffer.from(challenge.otpHash, 'hex'), Buffer.from(otpHash, 'hex'))) return { ok: false, reason: 'invalid' }
-  // Atomic consumption prevents reuse, including concurrent verification requests.
+                                                                                   
   const consumed = await OtpChallenge.findOneAndDelete({
     _id: challengeId, otpHash, expiresAt: { $gt: new Date() }, attempts: { $lte: 5 },
   })

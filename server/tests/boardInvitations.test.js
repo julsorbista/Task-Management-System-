@@ -22,7 +22,7 @@ test('email invitations require recipient consent and do not immediately grant a
     if (failMail) throw new Error('SMTP unavailable')
     emailMessage = message
   })
-  // Load after replacing the mail transport; no real emails or database writes.
+                                                                                
   delete require.cache[require.resolve('../controllers/invitationController')]
   const controller = require('../controllers/invitationController')
   t.mock.method(User, 'findOne', async () => registered ? { _id: recipient, email } : null)
@@ -82,7 +82,7 @@ test('email invitations require recipient consent and do not immediately grant a
   assert.deepEqual(memberships, [])
   const read = response()
   await controller.getInvitation({ params: { token }, user: { id: String(recipient) } }, read, (error) => { throw error })
-  assert.equal(read.data.status, 'pending') // GET from email scanners never accepts.
+  assert.equal(read.data.status, 'pending')                                          
   assert.deepEqual(memberships, [])
   const fromNotification = response()
   await controller.getInvitation({ params: { token: String(invitation._id) }, user: { id: String(recipient) } }, fromNotification, (error) => { throw error })

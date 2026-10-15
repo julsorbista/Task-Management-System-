@@ -36,7 +36,7 @@ async function createShareLink(req, res, next) {
     })
 
     res.set('Cache-Control', 'no-store')
-    // Return the secret once. Acceptance and the frontend URL are not wired yet.
+                                                                                 
     return res.status(201).json({ ...formatLink(link), token })
   } catch (error) {
     return next(error)
@@ -60,7 +60,7 @@ async function revokeShareLink(req, res, next) {
     return res.status(400).json({ message: 'Invalid share link ID.' })
   }
   try {
-    // Atomic and idempotent: preserve the original revocation date.
+                                                                    
     const link = await ShareLink.findOneAndUpdate(
       { _id: req.params.linkId, board: req.board._id },
       [{ $set: { revokedAt: { $ifNull: ['$revokedAt', '$$NOW'] } } }],

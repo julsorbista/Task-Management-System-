@@ -1,6 +1,3 @@
-// ResetPassword.jsx
-// Choose a new password (new password + confirm password).
-
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import AuthCard from '../components/AuthCard.jsx'

@@ -4,7 +4,6 @@ import AuthCard from '../components/AuthCard.jsx'
 import { requestPasswordReset } from '../api/api.js'
 
 function CheckEmail() {
-  // The email was passed along by the Forgot password screen
   const location = useLocation()
   const email = location.state && location.state.email ? location.state.email : 'your email address'
 

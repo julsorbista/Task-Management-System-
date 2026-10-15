@@ -6,25 +6,18 @@ import { login, verifyLoginOtp, getPages, getCurrentUser, getTasks, getUsers, ge
 import { workspaceSnapshot } from '../utils/workspaceSnapshot.js'
 import { isValidEmail, isValidPassword, isValidUsername } from '../utils/helpers.js'
 
-// The OTP has 6 digits; each box holds one of them
 const OTP_LENGTH = 6
 const EMPTY_DIGITS = ['', '', '', '', '', '']
 
 function Login() {
   const navigate = useNavigate()
-  // Messages passed to this screen (for example "Your account has been deleted")
-  // are shown by NavigationToast in App.jsx
-
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
-
-  // Error messages shown under the fields
   const [identifierError, setIdentifierError] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [digits, setDigits] = useState(EMPTY_DIGITS)
   const otp = digits.join('')
   const isOtpComplete = /^\d{6}$/.test(otp)
-  // The 6 box elements, so we can move the cursor between them
   const boxRefs = useRef([])
   const [otpError, setOtpError] = useState('')
   const [otpChallenge, setOtpChallenge] = useState(null)
@@ -61,14 +54,11 @@ function Login() {
     }
   }
 
-  // "Maya Reyes" -> { toast: 'Welcome back, Maya!' }, passed along with the page change
   function welcomeMessage(user) {
     const firstName = (user?.name || '').trim().split(' ')[0]
     return { toast: firstName ? 'Welcome back, ' + firstName + '!' : 'Welcome back!' }
   }
 
-  // Runs after EVERY successful log in (with or without OTP).
-  // Opens the first page and passes the welcome message along with it.
   async function openFirstTaskPage() {
     const invitationReturn = sessionStorage.getItem('morrow-invitation-return')
     if (invitationReturn && /^\/invitations\?(?:token=[a-f0-9]{64}|id=[a-f0-9]{24})(?:&action=(?:accept|decline))?$/.test(invitationReturn)) {
@@ -88,10 +78,9 @@ function Login() {
   }
 
   async function handleSubmit(event) {
-    event.preventDefault() // stop the browser from reloading the page
+    event.preventDefault() 
     if (isSubmitting) return
 
-    // 1. Check the fields
     let newIdentifierError = ''
     let newPasswordError = ''
     const trimmedIdentifier = identifier.trim()
@@ -107,7 +96,6 @@ function Login() {
     setPasswordError(newPasswordError)
     if (newIdentifierError || newPasswordError) return
 
-    // 2. Check the password and request an OTP
     setIsSubmitting(true)
     try {
       const challenge = await login(trimmedIdentifier, password)
@@ -146,7 +134,6 @@ function Login() {
       }
       await openFirstTaskPage()
     } catch (error) {
-      // Wrong code: show the error, empty the boxes and start again at the first one
       setOtpError(error.message)
       setDigits(EMPTY_DIGITS)
       focusBox(0)
@@ -155,13 +142,11 @@ function Login() {
     }
   }
 
-  // ---------- The 6 OTP boxes ----------
   function focusBox(index) {
     const box = boxRefs.current[index]
     if (box) box.focus()
   }
 
-  // Put digits into the boxes, starting at box "start"
   function fillBoxes(start, text) {
     const newDigits = [...digits]
     let index = start
@@ -175,14 +160,12 @@ function Login() {
   }
 
   function handleBoxChange(index, value) {
-    const typed = value.replace(/\D/g, '') // numbers only
+    const typed = value.replace(/\D/g, '') 
     if (typed === '') return
-    // More than one digit at once (for example the phone filling in the code)
     if (typed.length >= OTP_LENGTH) {
       fillBoxes(0, typed)
       return
     }
-    // Keep the newest digit, then move to the next box
     const newDigits = [...digits]
     newDigits[index] = typed[typed.length - 1]
     setDigits(newDigits)
@@ -194,10 +177,8 @@ function Login() {
       event.preventDefault()
       const newDigits = [...digits]
       if (digits[index] !== '') {
-        // Clear this box
         newDigits[index] = ''
       } else if (index > 0) {
-        // Already empty: go back and clear the previous box
         newDigits[index - 1] = ''
         focusBox(index - 1)
       }
@@ -215,7 +196,6 @@ function Login() {
     event.preventDefault()
     const pasted = event.clipboardData.getData('text').replace(/\D/g, '')
     if (pasted === '') return
-    // A full 6-digit code fills every box; a shorter one fills from this box on
     fillBoxes(pasted.length >= OTP_LENGTH ? 0 : index, pasted)
   }
 
@@ -233,7 +213,6 @@ function Login() {
             <div className="label" id="login-otp-label">
               OTP code
             </div>
-            {/* One box per digit */}
             <div className="otp-boxes" role="group" aria-labelledby="login-otp-label">
               {digits.map((digit, index) => (
                 <input

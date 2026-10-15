@@ -1,4 +1,4 @@
-// Poll only the lightweight notification endpoint; keep the workspace on screen.
+
 export function startNotificationRefresh(refresh, { browser = window, document = browser.document, interval = 10000 } = {}) {
   let stopped = false
   let pending = false

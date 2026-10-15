@@ -1,13 +1,7 @@
-// helpers.js
-// Small helper functions used on many screens (dates, labels, filtering).
-
-// Labels shown to the user for each stored value
 export const PRIORITY_LABELS = { high: 'High', medium: 'Medium', low: 'Low' }
 export const STATUS_LABELS = { todo: 'To Do', 'in-progress': 'In Progress', done: 'Done' }
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-// Turn a Date object into text like "2026-10-08"
 export function toDateString(date) {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -15,25 +9,21 @@ export function toDateString(date) {
   return year + '-' + month + '-' + day
 }
 
-// Turn text like "2026-10-08" into a Date object
 export function toDate(dateString) {
   const parts = dateString.split('-')
   return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
 }
 
-// Today as text, for example "2026-10-08"
 export function todayString() {
   return toDateString(new Date())
 }
 
-// Add (or subtract) days from a date string
 export function addDays(dateString, numberOfDays) {
   const date = toDate(dateString)
   date.setDate(date.getDate() + numberOfDays)
   return toDateString(date)
 }
 
-// "2026-10-08" -> "Today", "Tomorrow", "Yesterday" or "Oct 8"
 export function formatDate(dateString) {
   if (!dateString) return ''
   const today = todayString()
@@ -44,7 +34,6 @@ export function formatDate(dateString) {
   return MONTH_NAMES[date.getMonth()] + ' ' + date.getDate()
 }
 
-// "16:00" -> "4:00 PM"
 export function formatTime(timeString) {
   if (!timeString) return ''
   const parts = timeString.split(':')
@@ -53,33 +42,28 @@ export function formatTime(timeString) {
   return hour12 + ':' + parts[1] + (hour < 12 ? ' AM' : ' PM')
 }
 
-// Due date and time together, for example "Today · 4:00 PM"
 export function formatDue(task) {
   if (!task.dueDate) return 'No date'
   if (task.dueTime) return formatDate(task.dueDate) + ' · ' + formatTime(task.dueTime)
   return formatDate(task.dueDate)
 }
 
-// A task is overdue when it is not done and its due date has passed
 export function isOverdue(task) {
   return task.status !== 'done' && task.dueDate !== '' && task.dueDate < todayString()
 }
 
-// Get an id as a string from a full object ({ _id } or { id }) or a plain id
 export function getId(value) {
   if (!value) return ''
   if (typeof value === 'object') return String(value._id || value.id || '')
   return String(value)
 }
 
-// True when the task's assignee is the logged-in user
 export function isAssignedToMe(task, currentUser) {
   const assigneeId = getId(task.assignee)
   const userId = getId(currentUser)
   return assigneeId !== '' && userId !== '' && assigneeId === userId
 }
 
-// "Maya Reyes" -> "MR"
 export function getInitials(name) {
   if (!name) return '?'
   const words = name.trim().split(' ')
@@ -88,7 +72,6 @@ export function getInitials(name) {
   return (first + last).toUpperCase()
 }
 
-// Very simple email check: something@something.something
 export function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 }
@@ -101,8 +84,6 @@ export function isValidPassword(password) {
   return password.length >= 8
 }
 
-// Apply the filter and sort choices to a list of tasks.
-// filters looks like: { priority: 'all', status: 'all', due: 'all', sort: 'due-soonest' }
 export function filterAndSortTasks(tasks, filters) {
   const today = todayString()
   const nextWeek = addDays(today, 7)
@@ -117,7 +98,6 @@ export function filterAndSortTasks(tasks, filters) {
     return true
   })
 
-  // Text used to compare due dates. Tasks without a date go last.
   function dueKey(task) {
     return (task.dueDate || '9999-99-99') + ' ' + (task.dueTime || '99:99')
   }
@@ -144,10 +124,7 @@ export function filterAndSortTasks(tasks, filters) {
   return filtered
 }
 
-// The starting filter choices, used by the three task views
 export const DEFAULT_FILTERS = { priority: 'all', status: 'all', due: 'all', sort: 'due-soonest' }
-
-// A new, empty task for the task form
 export function makeEmptyTask(pageId, status) {
   return {
     page: pageId,

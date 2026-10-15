@@ -1,15 +1,3 @@
-// ConfirmDelete.jsx
-// Small pop-up that asks "are you sure?" before anything is deleted.
-// It sits in the center of the screen over a dimmed background.
-// Clicking outside it or pressing Escape cancels.
-//
-// Props:
-//   title         the question, for example "Delete this task?"
-//   message       one line explaining what will happen (optional)
-//   confirmLabel  text of the red button (default: "Delete")
-//   onConfirm     runs when the user confirms
-//   onCancel      runs when the user cancels
-
 import { useEffect, useState } from 'react'
 import './ConfirmDelete.css'
 
@@ -28,7 +16,6 @@ function ConfirmDelete({ title, message, confirmLabel, onConfirm, onCancel }) {
       setIsDeleting(false)
     }
   }
-  // Escape key cancels
   useEffect(() => {
     function handleKeyDown(event) {
       if (event.key === 'Escape' && !isDeleting) onCancel()
@@ -37,11 +24,9 @@ function ConfirmDelete({ title, message, confirmLabel, onConfirm, onCancel }) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onCancel, isDeleting])
 
-  // A click on the dimmed background (not on the box itself) cancels
   function handleBackgroundClick(event) {
     if (event.target === event.currentTarget && !isDeleting) onCancel()
   }
-
   return (
     <div className="overlay confirm-overlay" onClick={handleBackgroundClick}>
       <div className="modal modal-small" role="alertdialog" aria-label={title}>

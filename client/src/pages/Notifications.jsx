@@ -1,7 +1,3 @@
-// Notifications.jsx
-// The Notifications view. It opens from the bell icon in the top bar
-// (it is not a tab in the sidebar).
-
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../components/Layout.jsx'
@@ -20,7 +16,6 @@ import './Notifications.css'
 import { workspaceSnapshot } from '../utils/workspaceSnapshot.js'
 import { notificationDestination } from '../utils/notificationDestination.js'
 
-// Which icon to show for each type of notification
 const TYPE_ICONS = { 'due-soon': 'clock', overdue: 'alert', assigned: 'user', shared: 'users' }
 
 function Notifications() {
@@ -30,8 +25,6 @@ function Notifications() {
   const [tasks, setTasks] = useState(workspaceSnapshot.tasks)
   const [pages, setPages] = useState(workspaceSnapshot.pages)
   const [openError, setOpenError] = useState('')
-
-  // 'all' or 'unread'
   const [filter, setFilter] = useState('all')
   const [isConfirmingClear, setIsConfirmingClear] = useState(false)
 
@@ -59,7 +52,6 @@ function Notifications() {
     return () => { active = false }
   }, [])
 
-  // Name of the task or page a notification is about
   function getRelatedName(notification) {
     const task = tasks.find((t) => t._id === notification.task)
     if (task) return task.title
@@ -68,7 +60,6 @@ function Notifications() {
     return ''
   }
 
-  // Clicking a notification marks it as read and opens the related task (or page)
   async function handleOpen(notification) {
     setOpenError('')
     const destination = notificationDestination(notification, tasks)
@@ -84,7 +75,6 @@ function Notifications() {
     }
   }
 
-  // "Mark as read" on one notification (read ones cannot be marked unread again)
   async function handleMarkRead(notification) {
     const updatedNotification = await setNotificationRead(notification._id, true)
     setNotifications((currentNotifications) =>
@@ -99,7 +89,6 @@ function Notifications() {
     try {
       const result = await markAllNotificationsRead()
       setNotifications((items) => items.map((item) => ({ ...item, isRead: true })))
-      // Only say so when the server actually changed at least one notification
       const changedCount = result.modifiedCount ?? unreadCount
       if (changedCount > 0) showToast('Notifications marked as read')
     } catch (error) {
@@ -111,13 +100,11 @@ function Notifications() {
     const result = await clearReadNotifications()
     setIsConfirmingClear(false)
     setNotifications((items) => items.filter((item) => !item.isRead))
-    // Only say so when the server actually removed at least one notification
     const removedCount = result.deletedCount ?? readCount
     if (removedCount > 0) showToast('Read notifications cleared')
   }
 
   const visibleNotifications = notifications.filter((n) => filter === 'all' || !n.isRead)
-  // These counts decide which action buttons can be used
   const readCount = notifications.filter((n) => n.isRead).length
   const unreadCount = notifications.length - readCount
 
@@ -128,7 +115,6 @@ function Notifications() {
           <div className="notifications-head-left">
             <h1 className="notifications-title">Notifications</h1>
 
-            {/* All / Unread toggle */}
             <div className="notifications-toggle">
               <button type="button" className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>
                 All
@@ -139,7 +125,6 @@ function Notifications() {
             </div>
           </div>
 
-          {/* Text actions at the top right */}
           <div className="notifications-actions">
             <button
               type="button"
@@ -162,13 +147,11 @@ function Notifications() {
           </div>
         </div>
 
-        {/* The list */}
         {openError && <p className="error-text" role="alert">{openError}</p>}
         {visibleNotifications.length > 0 && (
           <div className="notifications-list">
             {visibleNotifications.map((notification) => (
               <div className="notification" key={notification._id}>
-                {/* Small dot for unread ones */}
                 <span className={notification.isRead ? 'notification-dot read' : 'notification-dot'}></span>
 
                 <span className="notification-icon">
@@ -184,8 +167,6 @@ function Notifications() {
 
                 <span className="small-text notification-time">{notification.timeLabel}</span>
 
-                {/* Unread: "Mark as read", shown when the mouse is over the row.
-                    Read: an empty cell, so the column keeps its space. */}
                 {notification.isRead ? (
                   <span className="notification-mark"></span>
                 ) : (
@@ -198,7 +179,6 @@ function Notifications() {
           </div>
         )}
 
-        {/* Empty state */}
         {visibleNotifications.length === 0 && (
           <div className="empty-state notifications-empty">
             <svg className="notifications-drawing" viewBox="0 0 96 96" aria-hidden="true">

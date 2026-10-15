@@ -10,7 +10,6 @@ function cachedBoard(pageId) {
     users: workspaceSnapshot.users, currentUser: workspaceSnapshot.user }
 }
 
-// Keep cached content visible during navigation and refresh permissions in the background.
 export default function useBoardData(pageId, reloadCount) {
   const revisions = useRef({})
   const [state, setState] = useState(() => ({ pageId, data: cachedBoard(pageId), error: '' }))
